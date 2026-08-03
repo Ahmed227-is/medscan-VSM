@@ -1,0 +1,147 @@
+{
+  "document_id": "doc_20260727_005448_b188d029",
+  "source": "data/raw/test_ordonnance.png",
+  "submitted_at": "2026-07-27T00:54:48.627341",
+  "status": "completed",
+  "steps": {
+    "pdf_handler": {
+      "status": "completed",
+      "started_at": "2026-07-27T00:54:48.627522",
+      "completed_at": "2026-07-27T00:54:48.627710",
+      "duration_seconds": 0.0,
+      "details": {
+        "type": "image",
+        "total_pages": 1
+      },
+      "error": null
+    },
+    "preprocessor": {
+      "status": "completed",
+      "started_at": "2026-07-27T00:54:49.344988",
+      "completed_at": "2026-07-27T00:54:49.526070",
+      "duration_seconds": 0.181,
+      "details": {
+        "page": 1,
+        "quality_score": 1.0,
+        "needs_llm_fallback": false
+      },
+      "error": null
+    },
+    "ocr": {
+      "status": "completed",
+      "started_at": "2026-07-27T00:54:49.526431",
+      "completed_at": "2026-07-27T00:54:50.933061",
+      "duration_seconds": 1.407,
+      "details": {
+        "page": 1,
+        "global_score": 0.987,
+        "mean_confidence": 0.99,
+        "min_confidence": 0.959,
+        "low_confidence_ratio": 0.0,
+        "total_blocks": 14
+      },
+      "error": null
+    },
+    "llm_fallback": {
+      "status": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "duration_seconds": null,
+      "details": {},
+      "error": null
+    },
+    "classification": {
+      "status": "completed",
+      "started_at": "2026-07-27T00:54:50.933452",
+      "completed_at": "2026-07-27T00:54:50.934136",
+      "duration_seconds": 0.001,
+      "details": {
+        "page": 1,
+        "predicted_type": "ordonnance",
+        "score": 0.708,
+        "method": "keywords",
+        "confident": true
+      },
+      "error": null
+    },
+    "ner": {
+      "status": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "duration_seconds": null,
+      "details": {},
+      "error": null
+    },
+    "structuration": {
+      "status": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "duration_seconds": null,
+      "details": {},
+      "error": null
+    },
+    "vsm_generation": {
+      "status": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "duration_seconds": null,
+      "details": {},
+      "error": null
+    }
+  },
+  "audit_trail": [
+    {
+      "timestamp": "2026-07-27T00:54:48.627355",
+      "action": "document_submitted",
+      "details": "Document soumis : data/raw/test_ordonnance.png"
+    },
+    {
+      "timestamp": "2026-07-27T00:54:48.627525",
+      "action": "pdf_handler_started",
+      "details": "Étape pdf_handler démarrée"
+    },
+    {
+      "timestamp": "2026-07-27T00:54:48.627716",
+      "action": "pdf_handler_completed",
+      "details": "Étape pdf_handler terminée en 0.0s"
+    },
+    {
+      "timestamp": "2026-07-27T00:54:49.345000",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-07-27T00:54:49.526095",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 0.181s"
+    },
+    {
+      "timestamp": "2026-07-27T00:54:49.526439",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-07-27T00:54:50.933074",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 1.407s"
+    },
+    {
+      "timestamp": "2026-07-27T00:54:50.933459",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-07-27T00:54:50.934144",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.001s"
+    },
+    {
+      "timestamp": "2026-07-27T00:54:50.934932",
+      "action": "pipeline_completed",
+      "details": "Pipeline terminé en 2.308s"
+    }
+  ],
+  "errors": [],
+  "completed_at": "2026-07-27T00:54:50.934927",
+  "total_duration_seconds": 2.308
+}

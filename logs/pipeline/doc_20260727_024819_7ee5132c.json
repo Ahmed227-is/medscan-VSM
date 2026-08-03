@@ -1,0 +1,95 @@
+{
+  "document_id": "doc_20260727_024819_7ee5132c",
+  "source": "data/raw/ABRICOT_Anthony.pdf",
+  "submitted_at": "2026-07-27T02:48:19.830437",
+  "status": "processing",
+  "steps": {
+    "pdf_handler": {
+      "status": "completed",
+      "started_at": "2026-07-27T02:48:19.830652",
+      "completed_at": "2026-07-27T02:52:17.907287",
+      "duration_seconds": 238.077,
+      "details": {
+        "type": "pdf",
+        "total_pages": 88
+      },
+      "error": null
+    },
+    "preprocessor": {
+      "status": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "duration_seconds": null,
+      "details": {},
+      "error": null
+    },
+    "ocr": {
+      "status": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "duration_seconds": null,
+      "details": {},
+      "error": null
+    },
+    "llm_fallback": {
+      "status": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "duration_seconds": null,
+      "details": {},
+      "error": null
+    },
+    "classification": {
+      "status": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "duration_seconds": null,
+      "details": {},
+      "error": null
+    },
+    "ner": {
+      "status": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "duration_seconds": null,
+      "details": {},
+      "error": null
+    },
+    "structuration": {
+      "status": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "duration_seconds": null,
+      "details": {},
+      "error": null
+    },
+    "vsm_generation": {
+      "status": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "duration_seconds": null,
+      "details": {},
+      "error": null
+    }
+  },
+  "audit_trail": [
+    {
+      "timestamp": "2026-07-27T02:48:19.830455",
+      "action": "document_submitted",
+      "details": "Document soumis : data/raw/ABRICOT_Anthony.pdf"
+    },
+    {
+      "timestamp": "2026-07-27T02:48:19.830656",
+      "action": "pdf_handler_started",
+      "details": "Étape pdf_handler démarrée"
+    },
+    {
+      "timestamp": "2026-07-27T02:52:17.907307",
+      "action": "pdf_handler_completed",
+      "details": "Étape pdf_handler terminée en 238.077s"
+    }
+  ],
+  "errors": [],
+  "completed_at": null,
+  "total_duration_seconds": null
+}

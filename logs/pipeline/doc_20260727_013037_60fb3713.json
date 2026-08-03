@@ -1,0 +1,87 @@
+{
+  "document_id": "doc_20260727_013037_60fb3713",
+  "source": "data/raw/ABRICOT_Anthony.pdf",
+  "submitted_at": "2026-07-27T01:30:37.637528",
+  "status": "processing",
+  "steps": {
+    "pdf_handler": {
+      "status": "running",
+      "started_at": "2026-07-27T01:30:37.637800",
+      "completed_at": null,
+      "duration_seconds": null,
+      "details": {},
+      "error": null
+    },
+    "preprocessor": {
+      "status": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "duration_seconds": null,
+      "details": {},
+      "error": null
+    },
+    "ocr": {
+      "status": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "duration_seconds": null,
+      "details": {},
+      "error": null
+    },
+    "llm_fallback": {
+      "status": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "duration_seconds": null,
+      "details": {},
+      "error": null
+    },
+    "classification": {
+      "status": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "duration_seconds": null,
+      "details": {},
+      "error": null
+    },
+    "ner": {
+      "status": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "duration_seconds": null,
+      "details": {},
+      "error": null
+    },
+    "structuration": {
+      "status": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "duration_seconds": null,
+      "details": {},
+      "error": null
+    },
+    "vsm_generation": {
+      "status": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "duration_seconds": null,
+      "details": {},
+      "error": null
+    }
+  },
+  "audit_trail": [
+    {
+      "timestamp": "2026-07-27T01:30:37.637632",
+      "action": "document_submitted",
+      "details": "Document soumis : data/raw/ABRICOT_Anthony.pdf"
+    },
+    {
+      "timestamp": "2026-07-27T01:30:37.637804",
+      "action": "pdf_handler_started",
+      "details": "Étape pdf_handler démarrée"
+    }
+  ],
+  "errors": [],
+  "completed_at": null,
+  "total_duration_seconds": null
+}

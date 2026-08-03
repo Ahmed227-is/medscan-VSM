@@ -1,0 +1,131 @@
+{
+  "document_id": "doc_20260531_211116_a412d241",
+  "source": "data/raw/test_ordonnance.png",
+  "submitted_at": "2026-05-31T21:11:16.590340",
+  "status": "completed",
+  "steps": {
+    "pdf_handler": {
+      "status": "completed",
+      "started_at": "2026-05-31T21:11:16.590466",
+      "completed_at": "2026-05-31T21:11:16.590631",
+      "duration_seconds": 0.0,
+      "details": {
+        "type": "image",
+        "total_pages": 1
+      },
+      "error": null
+    },
+    "preprocessor": {
+      "status": "completed",
+      "started_at": "2026-05-31T21:11:17.081104",
+      "completed_at": "2026-05-31T21:11:17.232725",
+      "duration_seconds": 0.152,
+      "details": {
+        "page": 1,
+        "quality_score": 1.0,
+        "needs_llm_fallback": false
+      },
+      "error": null
+    },
+    "ocr": {
+      "status": "completed",
+      "started_at": "2026-05-31T21:11:17.232941",
+      "completed_at": "2026-05-31T21:11:18.159578",
+      "duration_seconds": 0.927,
+      "details": {
+        "page": 1,
+        "global_score": 0.987,
+        "mean_confidence": 0.99,
+        "min_confidence": 0.959,
+        "low_confidence_ratio": 0.0,
+        "total_blocks": 14
+      },
+      "error": null
+    },
+    "llm_fallback": {
+      "status": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "duration_seconds": null,
+      "details": {},
+      "error": null
+    },
+    "classification": {
+      "status": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "duration_seconds": null,
+      "details": {},
+      "error": null
+    },
+    "ner": {
+      "status": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "duration_seconds": null,
+      "details": {},
+      "error": null
+    },
+    "structuration": {
+      "status": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "duration_seconds": null,
+      "details": {},
+      "error": null
+    },
+    "vsm_generation": {
+      "status": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "duration_seconds": null,
+      "details": {},
+      "error": null
+    }
+  },
+  "audit_trail": [
+    {
+      "timestamp": "2026-05-31T21:11:16.590352",
+      "action": "document_submitted",
+      "details": "Document soumis : data/raw/test_ordonnance.png"
+    },
+    {
+      "timestamp": "2026-05-31T21:11:16.590468",
+      "action": "pdf_handler_started",
+      "details": "Étape pdf_handler démarrée"
+    },
+    {
+      "timestamp": "2026-05-31T21:11:16.590636",
+      "action": "pdf_handler_completed",
+      "details": "Étape pdf_handler terminée en 0.0s"
+    },
+    {
+      "timestamp": "2026-05-31T21:11:17.081114",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-05-31T21:11:17.232738",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 0.152s"
+    },
+    {
+      "timestamp": "2026-05-31T21:11:17.232944",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-05-31T21:11:18.159587",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 0.927s"
+    },
+    {
+      "timestamp": "2026-05-31T21:11:18.160226",
+      "action": "pipeline_completed",
+      "details": "Pipeline terminé en 1.57s"
+    }
+  ],
+  "errors": [],
+  "completed_at": "2026-05-31T21:11:18.160222",
+  "total_duration_seconds": 1.57
+}
