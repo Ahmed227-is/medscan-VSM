@@ -1,0 +1,7 @@
+{
+  "step": "preprocessor",
+  "timestamp": "2026-08-04T00:37:14.869442",
+  "error": "Object of type bool_ is not JSON serializable",
+  "correction_applied": null,
+  "duration_before_fail": 1.471
+}

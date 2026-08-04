@@ -119,6 +119,10 @@ def test_pipeline(file_path: str):
                     print(f"    ✓ Moyenne conf    : {conf['mean_confidence']}")
                     print(f"    ✓ Minimum conf    : {conf['min_confidence']}")
                     print(f"    ✓ Blocs détectés  : {ocr_result.get('total_blocks', 0)}")
+                    ling = conf.get('linguistic_quality', {})
+                    print(f"    ✓ Score linguistique   : {ling.get('linguistic_score', 'N/A')}")
+                    print(f"    ✓ Texte lisible        : {ling.get('is_readable', 'N/A')}")
+                    print(f"    ✓ Pénalité appliquée   : {conf.get('linguistic_penalty_applied', False)}")
 
             except Exception as e:
                 tracker.fail_step("ocr", str(e))

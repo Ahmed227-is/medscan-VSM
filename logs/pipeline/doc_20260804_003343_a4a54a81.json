@@ -1,0 +1,27 @@
+{
+  "document_id": "doc_20260804_003343_a4a54a81",
+  "source": "data/raw/BANANE_Sophie.pdf",
+  "submitted_at": "2026-08-04T00:33:43.380883",
+  "status": "failed",
+  "steps": {
+    "pdf_handler": {
+      "status": "completed",
+      "started_at": "2026-08-04T00:33:43.381012",
+      "completed_at": "2026-08-04T00:37:07.351615",
+      "duration_seconds": 203.971,
+      "details": {
+        "type": "pdf",
+        "total_pages": 114
+      },
+      "error": null
+    },
+    "preprocessor": {
+      "status": "failed",
+      "started_at": "2026-08-04T00:37:13.398222",
+      "completed_at": "2026-08-04T00:37:14.868650",
+      "duration_seconds": 1.471,
+      "details": {
+        "page": 1,
+        "quality_score": 0.667,
+        "needs_llm_fallback": false,
+        "is_handwritten": 
