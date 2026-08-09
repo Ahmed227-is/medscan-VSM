@@ -1,0 +1,228 @@
+{
+  "document_id": "doc_20260806_052512_794c6019",
+  "source": "data/raw/BANANE_Sophie.pdf",
+  "submitted_at": "2026-08-06T05:25:12.133514",
+  "status": "processing",
+  "steps": {
+    "pdf_handler": {
+      "status": "completed",
+      "started_at": "2026-08-06T05:25:12.133737",
+      "completed_at": "2026-08-06T05:28:47.654686",
+      "duration_seconds": 215.521,
+      "details": {
+        "type": "pdf",
+        "total_pages": 114
+      },
+      "error": null
+    },
+    "preprocessor": {
+      "status": "completed",
+      "started_at": "2026-08-06T05:29:07.526196",
+      "completed_at": "2026-08-06T05:29:09.312669",
+      "duration_seconds": 1.786,
+      "details": {
+        "page": 3,
+        "quality_score": 0.727,
+        "needs_llm_fallback": false
+      },
+      "error": null
+    },
+    "ocr": {
+      "status": "running",
+      "started_at": "2026-08-06T05:29:09.313631",
+      "completed_at": "2026-08-06T05:29:07.520684",
+      "duration_seconds": 2.14,
+      "details": {
+        "page": 2,
+        "global_score": 0.867,
+        "mean_confidence": 0.913,
+        "min_confidence": 0.592,
+        "low_confidence_ratio": 0.027,
+        "total_blocks": 37
+      },
+      "error": null
+    },
+    "llm_fallback": {
+      "status": "skipped",
+      "started_at": null,
+      "completed_at": null,
+      "duration_seconds": null,
+      "details": {
+        "reason": "PaddleOCR suffisant (score=0.867)"
+      },
+      "error": null
+    },
+    "classification": {
+      "status": "completed",
+      "started_at": "2026-08-06T05:29:07.522379",
+      "completed_at": "2026-08-06T05:29:07.523232",
+      "duration_seconds": 0.001,
+      "details": {
+        "page": 2,
+        "predicted_type": "courrier_medecin",
+        "score": 0.478,
+        "method": "keywords",
+        "confident": true,
+        "zeroshot_used": false
+      },
+      "error": null
+    },
+    "ner": {
+      "status": "completed",
+      "started_at": "2026-08-06T05:29:07.523475",
+      "completed_at": "2026-08-06T05:29:07.525742",
+      "duration_seconds": 0.002,
+      "details": {
+        "page": 2,
+        "method": "regex_only",
+        "pathologies": 1,
+        "traitements": 0,
+        "allergies": 0,
+        "constantes": 0,
+        "dates": 0
+      },
+      "error": null
+    },
+    "structuration": {
+      "status": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "duration_seconds": null,
+      "details": {},
+      "error": null
+    },
+    "vsm_generation": {
+      "status": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "duration_seconds": null,
+      "details": {},
+      "error": null
+    }
+  },
+  "audit_trail": [
+    {
+      "timestamp": "2026-08-06T05:25:12.133528",
+      "action": "document_submitted",
+      "details": "Document soumis : data/raw/BANANE_Sophie.pdf"
+    },
+    {
+      "timestamp": "2026-08-06T05:25:12.133741",
+      "action": "pdf_handler_started",
+      "details": "Étape pdf_handler démarrée"
+    },
+    {
+      "timestamp": "2026-08-06T05:28:47.654702",
+      "action": "pdf_handler_completed",
+      "details": "Étape pdf_handler terminée en 215.521s"
+    },
+    {
+      "timestamp": "2026-08-06T05:28:53.053680",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-06T05:28:54.834065",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.78s"
+    },
+    {
+      "timestamp": "2026-08-06T05:28:54.834548",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-06T05:28:57.200222",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 2.366s"
+    },
+    {
+      "timestamp": "2026-08-06T05:28:57.200776",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.911)"
+    },
+    {
+      "timestamp": "2026-08-06T05:28:57.201164",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-06T05:29:03.720511",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 6.519s"
+    },
+    {
+      "timestamp": "2026-08-06T05:29:03.720959",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-06T05:29:03.739912",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 0.019s"
+    },
+    {
+      "timestamp": "2026-08-06T05:29:03.740478",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-06T05:29:05.379880",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.639s"
+    },
+    {
+      "timestamp": "2026-08-06T05:29:05.380417",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-06T05:29:07.520695",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 2.14s"
+    },
+    {
+      "timestamp": "2026-08-06T05:29:07.521111",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.867)"
+    },
+    {
+      "timestamp": "2026-08-06T05:29:07.522390",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-06T05:29:07.523237",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.001s"
+    },
+    {
+      "timestamp": "2026-08-06T05:29:07.523479",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-06T05:29:07.525747",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 0.002s"
+    },
+    {
+      "timestamp": "2026-08-06T05:29:07.526203",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-06T05:29:09.312702",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.786s"
+    },
+    {
+      "timestamp": "2026-08-06T05:29:09.313641",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    }
+  ],
+  "errors": [],
+  "completed_at": null,
+  "total_duration_seconds": null
+}

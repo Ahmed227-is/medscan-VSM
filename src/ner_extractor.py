@@ -1,541 +1,132 @@
+"""
+ner_extractor.py — MedScan VSM
+Module d'extraction d'entités médicales NER, conforme au référentiel VSM HAS / CI-SIS.
+
+HISTORIQUE DE CONCEPTION (pour le dossier technique / soutenance) :
+    - v1 : approche hybride regex + DrBERT-4GB-CP-CamemBERT
+    - Constat sur documents réels (BANANE_Sophie.pdf, etc.) :
+        · Le regex, même exhaustif, ne capture pas la variabilité du langage
+          médical réel (formulations libres, abréviations non standard,
+          erreurs OCR sur manuscrits) → beaucoup de faux négatifs.
+        · DrBERT-4GB-CP-CamemBERT est incompatible avec transformers==5.9.0
+          (erreur de tokenizer), et les alternatives testées (DoctoBERT,
+          HealthcareNER-Fr) ne sont pas exploitables (non fine-tuné / gated).
+    - v2 (ce fichier) : extraction 100% via Qwen2.5-VL en mode TEXTE (pas
+      vision) sur le texte déjà extrait par ocr_engine.py / llm_fallback.py.
+      Un LLM généraliste bien prompté gère mieux le langage médical libre
+      qu'un pipeline regex, et Qwen est déjà intégré/testé dans le projet
+      (fallback OCR), donc aucune nouvelle dépendance.
+
+INTERFACE CONSERVÉE (compatibilité avec le reste du pipeline) :
+    - NERExtractor().extract(text, document_type="inconnu") -> dict
+      (même signature et mêmes clés de sortie que la v1 regex+DrBERT)
+    - Nouveau : NERExtractor().extract_document(pages, document_type, tracker)
+      pour traiter un document multi-pages avec fusion/dédoublonnage.
+"""
+
+import json
 import re
-from transformers import pipeline, AutoTokenizer, AutoModelForTokenClassification
+import logging
+import requests
+from difflib import SequenceMatcher
+from typing import Optional
 
+logger = logging.getLogger("ner_extractor")
 
 # ============================================================
-# PATTERNS REGEX EXHAUSTIFS — basés sur référentiel HAS/CI-SIS
+# CONFIG OLLAMA — cohérent avec llm_fallback.py
 # ============================================================
+OLLAMA_URL = "http://localhost:11434/api/chat"
+MODEL_NAME = "qwen2.5vl:3b"
+NUM_CTX_MIN = 1024      # plancher : jamais en dessous, même pour un texte très court
+NUM_CTX_MAX = 8192      # plafond : jamais au-dessus, pour rester sûr sur 16GB RAM / iGPU
+TIMEOUT = 600
 
-PATTERNS = {
+# Seuil de similarité pour le dédoublonnage fuzzy (0-1)
+FUZZY_DEDUP_THRESHOLD = 0.85
 
-    # --------------------------------------------------------
-    # MÉDICAMENTS ET TRAITEMENTS
-    # --------------------------------------------------------
-    "medicaments": [
-        # Médicament + dosage + posologie complète
-        r'\b([A-ZÀ-ÿ][a-zA-ZÀ-ÿ\-]+(?:\s+[A-ZÀ-ÿ][a-zA-ZÀ-ÿ\-]+)?'
-        r'\s+\d+(?:[.,]\d+)?\s*(?:mg|ml|g|µg|mcg|UI|MUI|mmol|ng|mg/ml|mg/kg)'
-        r'(?:\s+\d+\s*(?:comprimé|gélule|cp|cps|ampoule|sachet)s?)?'
-        r'(?:\s+(?:matin\s+et\s+soir|matin\s+midi\s+et\s+soir|'
-        r'par\s+jour|le\s+matin|le\s+soir|matin|midi|soir|'
-        r'au\s+coucher|à\s+jeun|au\s+réveil|en\s+continu))?)\b',
+# ============================================================
+# SCHÉMA DE SORTIE — conserve exactement les clés de la v1
+# (pathologies_actives, antecedents_medicaux, etc.) pour ne
+# rien casser en aval (vsm_generator.py, test_pipeline.py)
+# ============================================================
+OUTPUT_SCHEMA_KEYS = [
+    "pathologies_actives",
+    "antecedents_medicaux",
+    "antecedents_chirurgicaux",
+    "allergies_intolerances",
+    "traitements_en_cours",
+    "constantes_biologiques",
+    "vaccinations",
+    "facteurs_risque",
+    "examens_bilans",
+    "dates_importantes",
+]
 
-        # Médicament + forme galénique
-        r'\b([A-ZÀ-ÿ][a-zA-ZÀ-ÿ\-]+\s+'
-        r'\d+\s*(?:comprimé|gélule|cp|cps|caps|ampoule|sachet|'
-        r'suppositoire|patch|spray|goutte|solution|sirop|'
-        r'injectable|perfusion)s?)\b',
+SYSTEM_PROMPT = """Tu es un assistant médical spécialisé dans l'extraction d'informations \
+structurées à partir de documents médicaux français (ordonnances, comptes rendus, \
+courriers médecin, résultats biologiques, résultats imagerie). Le texte fourni est \
+issu d'un OCR et peut contenir des imperfections.
 
-        # Médicament avec DCI + nom commercial
-        r'\b([A-ZÀ-ÿ][a-zA-ZÀ-ÿ\-]+\s*\([A-ZÀ-ÿ][a-zA-ZÀ-ÿ\-]+\)'
-        r'\s*\d+\s*(?:mg|ml|g|µg))\b',
-    ],
+RÈGLES :
+1. Extrais UNIQUEMENT les informations explicitement présentes dans le texte. N'invente rien.
+2. Si une catégorie n'a rien à extraire, retourne une liste vide — ne force jamais une entrée.
+3. Formule chaque entité en une chaîne courte MAIS COMPLÈTE, avec le contexte utile trouvé
+   dans le texte (résultat, conclusion, dosage, posologie...). Ne te contente jamais du
+   seul nom de l'entité si le texte donne plus de détails autour.
+4. Relis le texte entièrement avant de répondre : les dates, en particulier, apparaissent
+   souvent à PLUSIEURS endroits différents du document (date de prescription, date
+   d'enregistrement, date de l'acte...) — il faut TOUTES les extraire, pas seulement la
+   première trouvée.
 
-    # --------------------------------------------------------
-    # DATES — tous formats médicaux français
-    # --------------------------------------------------------
-    "dates": [
-        # JJ/MM/AAAA, JJ-MM-AAAA, JJ.MM.AAAA — groupe 0 complet
-        r'\b\d{1,2}[/\-\.]\d{1,2}[/\-\.]\d{2,4}\b',
+EXEMPLE :
 
-        # Mois/AAAA
-        r'\b\d{1,2}[/\-\.]\d{4}\b',
+Texte source :
+"Prescrit le 09/10/2014. Enregistré le 10/10/2014. FROTTIS DE DEPISTAGE : Ménopause.
+Le fond est propre. CONCLUSION : Frottis satisfaisant, non inflammatoire dans le cadre
+d'une ménopause subatrophique. Absence de cellule suspecte sur les frottis examinés."
 
-        # Texte long : "le 2 octobre 2007"
-        r'\b(?:le\s+)?\d{1,2}\s+'
-        r'(?:janvier|février|mars|avril|mai|juin|juillet|août|'
-        r'septembre|octobre|novembre|décembre)\s+\d{4}\b',
-
-        # Année avec contexte médical
-        r'\b(?:en|depuis|jusqu\'en|avant|après|né\s+en|opéré\s+en|'
-        r'diagnostiqué\s+en|hospitalisé\s+en)\s+(\d{4})\b',
-    ],
-
-    # --------------------------------------------------------
-    # CONSTANTES BIOLOGIQUES ET CLINIQUES — groupe 0 complet
-    # --------------------------------------------------------
-    "constantes": [
-        
-        # Tension artérielle — pattern simplifié qui fonctionne
-        r'TA\s*[:\-]\s*(\d+/\d+)',
-        r'(?:tension\s+art[eé]rielle|pression\s+art[eé]rielle)\s*[:\-]?\s*(\d+/\d+)',
-        
-        # Poids avec unité
-        r'\b(?:[Pp]oids)\s*[:\-]?\s*\d{2,3}(?:[.,]\d+)?\s*(?:kg|kilos?)\b',
-
-        # Taille avec unité
-        r'\b(?:[Tt]aille)\s*[:\-]?\s*\d{2,3}\s*(?:cm|m)\b',
-
-        # IMC
-        r'\b(?:IMC|indice\s+de\s+masse\s+corporelle)'
-        r'\s*[:\-]?\s*\d{1,2}(?:[.,]\d+)?\s*(?:kg/m²)?\b',
-
-        # HbA1c
-        r'\b(?:HbA1c|hémoglobine\s+glyquée)'
-        r'\s*[:\-]?\s*\d+(?:[.,]\d+)?\s*(?:%|mmol/mol)?\b',
-
-        # Glycémie
-        r'\b(?:glycémie|glucose)'
-        r'\s*[:\-]?\s*\d+(?:[.,]\d+)?\s*(?:g/l|mmol/l|mg/dl)?\b',
-
-        # Créatinine
-        r'\b(?:créatinine|creatinine)'
-        r'\s*[:\-]?\s*\d+(?:[.,]\d+)?\s*(?:µmol/l|mg/l|umol/l)?\b',
-
-        # Cholestérol LDL HDL
-        r'\b(?:cholestérol|LDL|HDL|triglycérides?)'
-        r'\s*[:\-]?\s*\d+(?:[.,]\d+)?\s*(?:g/l|mmol/l|mg/dl)?\b',
-
-        # Fréquence cardiaque
-        r'\b(?:FC|fréquence\s+cardiaque|pouls)'
-        r'\s*[:\-]?\s*\d{2,3}\s*(?:bpm|/min)?\b',
-
-        # Saturation O2
-        r'\b(?:SpO2|saturation|SaO2)\s*[:\-]?\s*\d{2,3}\s*(?:%)?\b',
-
-        # Température
-        r'\b(?:température|T°)\s*[:\-]?\s*\d{2}(?:[.,]\d+)?\s*(?:°C)?\b',
-
-        # INR
-        r'\bINR\s*[:\-]?\s*\d+(?:[.,]\d+)?\b',
-
-        # PSA
-        r'\bPSA\s*[:\-]?\s*\d+(?:[.,]\d+)?\s*(?:ng/ml)?\b',
-
-        # DFG
-        r'\b(?:DFG|clairance|MDRD|CKD-EPI)'
-        r'\s*[:\-]?\s*\d+(?:[.,]\d+)?\s*(?:ml/min)?\b',
-
-        # SA (semaines d'aménorrhée)
-        r'\b\d+\s*(?:SA|semaines?\s+d\'aménorrhée)\b',
-    ],
-
-    # --------------------------------------------------------
-    # ALLERGIES ET INTOLÉRANCES
-    # --------------------------------------------------------
-    "allergies": [
-    # Capture X et Y : "Allergie à la Pénicilline et à l'Aspirine"
-    r'[Aa]llergi\w*\s+(?:à|au|aux)\s+(?:la\s+|l\'|le\s+)?(\w+)'
-    r'(?:\s+et\s+(?:à|au|aux)\s+(?:la\s+|l\'|le\s+)?(\w+))?',
-
-    # Format liste "Allergies : X, Y"
-    r'[Aa]llergi(?:e|es)\s*[:\-]\s*(\w[\w\s,\-]+?)(?:\n|$|\.\s)',
-
-    # Intolérance
-    r'[Ii]ntol[eé]rance\s+(?:à\s+(?:la\s+|l\'|le\s+)?|au\s+|aux\s+)(\w+)',
-
-    # Contre-indication
-    r'[Cc]ontre[-\s]indication\s+(?:à\s+(?:la\s+|l\'|le\s+)?|au\s+|aux\s+)(\w+)',
-
-    # Hypersensibilité
-    r'[Hh]ypersensibilit[eé]\s+(?:à\s+(?:la\s+|l\'|le\s+)?|au\s+|aux\s+)(\w+)',
-    ],
-
-    # --------------------------------------------------------
-    # VACCINATIONS — calendrier vaccinal français complet
-    # --------------------------------------------------------
-    "vaccinations": [
-        # Vaccin + nom avec statut
-        r'\b(?:vaccin(?:ation|é|ée|és|ées)?\s+(?:contre\s+)?|'
-        r'rappel\s+(?:de\s+)?|primo[-\s]vaccination\s+(?:contre\s+)?)'
-        r'([A-ZÀ-ÿ][a-zA-ZÀ-ÿ\s\-]+?)'
-        r'(?:\s+à\s+jour|\s+(?:fait|effectué|réalisé|incomplet)|\.|,|\n)',
-
-        # Vaccins nommés calendrier vaccinal français
-        r'\b(DTP|DTPolio|DTCaPolio|BCG|ROR|MMR|'
-        r'Hépatite\s+[AB]|HBV|HAV|'
-        r'Pneumocoque|Méningocoque|Méningite\s+[ABCWY]|'
-        r'Grippe\s+saisonnière|Influenza|'
-        r'HPV|Papillomavirus|Gardasil|Cervarix|'
-        r'Covid[-\s]?19|SARS-CoV-2|'
-        r'Zona|Varicelle|Rotavirus|'
-        r'Typhoïde|Fièvre\s+jaune|Rage|Tétanos|'
-        r'Coqueluche|Rougeole|Rubéole|Oreillons)\b',
-
-        # Statut vaccinal
-        r'\b(?:vaccin(?:s|ation)?)\s+'
-        r'(?:à\s+jour|non\s+à\s+jour|incomplet(?:s)?|à\s+mettre\s+à\s+jour)\b',
-    ],
-
-    # --------------------------------------------------------
-    # ANTÉCÉDENTS CHIRURGICAUX — CCAM
-    # --------------------------------------------------------
-    "antecedents_chirurgicaux": [
-        # Interventions et procédures chirurgicales
-        r'\b(?:intervention(?:s)?\s+chirurgicale?s?|'
-        r'chirurgie|opération|'
-        r'opéré(?:e)?\s+(?:de|d\'|du)|'
-        r'intervention\s+(?:de|du|pour)|'
-        r'appendicectomie|cholécystectomie|hystérectomie|'
-        r'gastrectomie|colectomie|hépatectomie|'
-        r'néphrectomie|prostatectomie|thyroïdectomie|'
-        r'mastectomie|tumorectomie|'
-        r'appendicite\s+opérée|hernie\s+(?:hiatale\s+)?opérée|'
-        r'hernie\s+(?:hiatale|inguinale|discale)|'
-        r'prothèse\s+(?:de\s+hanche|de\s+genou|totale|partielle)|'
-        r'implant|greffe|transplantation|'
-        r'bypass|pontage\s+(?:coronarien|aorto[-\s]coronarien)|'
-        r'résection|ablation|exérèse|'
-        r'arthroscopie|arthrodèse|'
-        r'fracture\s+(?:opérée|chirurgicale)|'
-        r'FOGD\s+(?:thérapeutique|opératoire)|'
-        r'césarienne|accouchement\s+par\s+césarienne)\b',
-    ],
-
-    # --------------------------------------------------------
-    # FACTEURS DE RISQUE — HAS
-    # --------------------------------------------------------
-    "facteurs_risque": [
-        # Tabac — toutes formes
-        r'\b(?:tabac|tabagisme|fumeur|fumeuse|'
-        r'ex[-\s]fumeur|ex[-\s]fumeuse|sevrage\s+tabagique|'
-        r'consommation\s+tabagique|'
-        r'\d+\s*(?:paquet[s]?[-\s]an(?:née)?[s]?|PA)|'
-        r'(?:>|<|≥|≤|\d+)\s*(?:PA|paquet[s]?\s*[-/]\s*an(?:née)?)|'
-        r'intoxication\s+tabagique(?:\s+chronique)?|'
-        r'non\s+sevré(?:e)?)\b',
-
-        # Alcool
-        r'\b(?:alcool|alcoolisme|consommation\s+d\'alcool|'
-        r'éthylisme|OH|intoxication\s+alcoolique|'
-        r'sevrage\s+alcoolique|'
-        r'\d+\s*verres?/(?:semaine|jour|an)|'
-        r'abstinent(?:e)?|sobre)\b',
-
-        # Activité physique
-        r'\b(?:sédentarité|sédentaire|'
-        r'activité\s+physique\s+(?:insuffisante|réduite|nulle|régulière)|'
-        r'sportif|sport\s+régulier|'
-        r'marche\s+régulière)\b',
-
-        # Surpoids / obésité
-        r'\b(?:surpoids|obésité|obèse|'
-        r'obésité\s+(?:morbide|sévère|modérée|de\s+grade\s+[123]))\b',
-
-        # Facteurs cardiovasculaires
-        r'\b(?:dyslipidémie|hypercholestérolémie|'
-        r'hypertriglycéridémie|hyperlipidémie|'
-        r'syndrome\s+métabolique|'
-        r'risque\s+cardiovasculaire\s+(?:élevé|modéré|faible)|'
-        r'SCORE\s+cardiovasculaire)\b',
-
-        # Antécédents familiaux
-        r'\b(?:antécédent[s]?\s+familiaux?|ATCD\s+familiaux?)\s+'
-        r'(?:de\s+)?(?:diabète|HTA|hypertension|infarctus|'
-        r'cancer|AVC|maladie\s+coronarienne|mort\s+subite)\b',
-
-        # Facteurs professionnels
-        r'\b(?:exposition\s+(?:professionnelle|au\s+bruit|aux\s+produits\s+chimiques)|'
-        r'amiante|silice|risque\s+professionnel|'
-        r'travail\s+(?:de\s+nuit|posté|en\s+équipe|pénible))\b',
-
-        # Alimentation
-        r'\b(?:alimentation\s+(?:déséquilibrée|riche\s+en\s+graisses)|'
-        r'régime\s+(?:déséquilibré|hypercalorique)|'
-        r'malnutrition)\b',
-    ],
-
-    # --------------------------------------------------------
-    # PATHOLOGIES ACTIVES — CIM-10 et CISP
-    # --------------------------------------------------------
-    "pathologies": [
-        # Diabète — toutes formes
-        r'\b(?:diabète\s+(?:de\s+)?type\s+[12I]|'
-        r'diabète\s+type\s+[12]|DT[12]|'
-        r'diabète\s+(?:insulino[-\s]?dépendant|'
-        r'non\s+insulino[-\s]?dépendant|'
-        r'gestationnel|MODY|secondaire)|'
-        r'diabétique)\b',
-
-        # Cardio-vasculaire
-        r'\b(?:hypertension\s+artérielle|HTA|'
-        r'insuffisance\s+cardiaque\s+(?:gauche|droite|globale)?|IC|'
-        r'fibrillation\s+auriculaire|FA|flutter\s+auriculaire|'
-        r'infarctus\s+(?:du\s+myocarde)?|IDM|SCA|'
-        r'angor|angine\s+de\s+poitrine|'
-        r'coronaropathie|maladie\s+coronarienne|'
-        r'AVC|accident\s+vasculaire\s+cérébral|'
-        r'AIT|accident\s+ischémique\s+transitoire|'
-        r'artérite|AOMI|thrombose|'
-        r'embolie\s+pulmonaire|EP|'
-        r'phlébite|thrombophlébite|TVP|'
-        r'dissection\s+aortique|anévrisme)\b',
-
-        # Respiratoire
-        r'\b(?:asthme|BPCO|'
-        r'bronchite\s+chronique\s+obstructive?|'
-        r'emphysème|insuffisance\s+respiratoire\s+(?:chronique|aiguë)?|'
-        r'apnée\s+(?:obstructive\s+)?du\s+sommeil|SAOS|SAHOS|'
-        r'pneumonie|pleurésie|'
-        r'tuberculose|séquelle\s+tuberculeuse|'
-        r'cancer\s+(?:du\s+)?poumon|néoplasie\s+pulmonaire|'
-        r'fibrose\s+pulmonaire|sarcoïdose)\b',
-
-        # Digestif
-        r'\b(?:reflux\s+gastro[-\s]?[oœ]sophagien|RGO|'
-        r'ulcère\s+(?:gastrique|duodénal|gastro[-\s]?duodénal)|'
-        r'gastrite|Helicobacter\s+pylori|HP|'
-        r'maladie\s+de\s+Crohn|rectocolite\s+hémorragique|RCH|MICI|'
-        r'colopathie\s+fonctionnelle|SII|'
-        r'cirrhose|hépatite\s+[ABC]|stéatose\s+hépatique|NASH|'
-        r'pancréatite|lithiase\s+biliaire|'
-        r'hernie\s+hiatale|'
-        r'cancer\s+(?:colorectal|du\s+côlon|du\s+rectum|'
-        r'de\s+l\'[oœ]sophage|gastrique|du\s+pancréas))\b',
-
-        # Rhumatologique
-        r'\b(?:arthrose\s+(?:du\s+genou|de\s+hanche|cervicale|lombaire)?|'
-        r'polyarthrite\s+rhumatoïde|PR|'
-        r'spondylarthrite\s+(?:ankylosante)?|SA|'
-        r'goutte|hyperuricémie|'
-        r'ostéoporose|ostéopénie|'
-        r'lombalgie\s+(?:chronique|aiguë)?|'
-        r'cervicalgie|dorsalgie|'
-        r'sciatique|sciatalgie|névralgie\s+cervico[-\s]brachiale|'
-        r'canal\s+carpien|'
-        r'fibromyalgie)\b',
-
-        # Endocrinologique
-        r'\b(?:hypothyroïdie|hyperthyroïdie|thyrotoxicose|'
-        r'thyroïdite\s+(?:de\s+Hashimoto|auto-immune)?|'
-        r'goitre|nodule\s+thyroïdien|'
-        r'insuffisance\s+surrénalienne|maladie\s+d\'Addison|'
-        r'syndrome\s+de\s+Cushing|'
-        r'hyperparathyroïdie|hypoparathyroïdie|'
-        r'ostéomalacie|rachitisme)\b',
-
-        # Neurologique / Psychiatrique
-        r'\b(?:épilepsie|crise\s+épileptique|'
-        r'maladie\s+de\s+Parkinson|syndrome\s+parkinsonien|'
-        r'sclérose\s+en\s+plaques|SEP|'
-        r'migraine|céphalées\s+(?:chroniques|de\s+tension)?|'
-        r'dépression\s+(?:majeure|chronique|saisonnière)?|'
-        r'anxiété\s+(?:généralisée)?|troubles?\s+anxieux|'
-        r'trouble\s+panique|phobie|'
-        r'schizophrénie|trouble\s+bipolaire|'
-        r'démence|maladie\s+d\'Alzheimer|troubles?\s+cognitifs|'
-        r'AVC\s+séquellaire|hémiplégie|'
-        r'neuropathie\s+(?:diabétique|périphérique)?|'
-        r'syndrome\s+dépressif|burn.out)\b',
-
-        # Rénal / Urologique
-        r'\b(?:insuffisance\s+rénale\s+(?:chronique|aiguë)|IRC|IRA|'
-        r'néphropathie\s+(?:diabétique|hypertensive)?|'
-        r'glomérulonéphrite|syndrome\s+néphrotique|'
-        r'lithiase\s+(?:rénale|urinaire|urétérale|urétéro-rénale)|'
-        r'pyélonéphrite|cystite\s+(?:chronique|récidivante)?|'
-        r'cancer\s+(?:du\s+)?rein|cancer\s+(?:de\s+la\s+)?prostate|'
-        r'hypertrophie\s+bénigne\s+(?:de\s+la\s+)?prostate|HBP|'
-        r'incontinence\s+urinaire|dysurie|pollakiurie)\b',
-
-        # Gynécologique / Obstétrical
-        r'\b(?:cancer\s+du\s+sein|'
-        r'cancer\s+de\s+l\'endomètre|'
-        r'cancer\s+du\s+col\s+(?:de\s+l\'utérus)?|'
-        r'endométriose|adénomyose|'
-        r'fibrome\s+(?:utérin)?|myome|'
-        r'kyste\s+(?:ovarien|de\s+l\'ovaire)|'
-        r'ménopause|préménopause|périménopause|'
-        r'syndrome\s+des\s+ovaires\s+polykystiques|SOPK|'
-        r'grossesse\s+(?:extra[-\s]utérine|GEU)?|'
-        r'fausse\s+couche|avortement|IVG|'
-        r'accouchement\s+(?:prématuré|par\s+voies\s+naturelles)?|'
-        r'pré[-\s]éclampsie|éclampsie|'
-        r'diabète\s+gestationnel)\b',
-
-        # Oncologie générale
-        r'\b(?:cancer|carcinome|adénocarcinome|'
-        r'mélanome|lymphome\s+(?:hodgkinien|non\s+hodgkinien)?|'
-        r'leucémie\s+(?:aiguë|chronique|lymphoïde|myéloïde)?|'
-        r'myélome\s+multiple|'
-        r'néoplasie|tumeur\s+(?:maligne|bénigne)?|métastase|'
-        r'chimiothérapie|radiothérapie|immunothérapie|hormonothérapie|'
-        r'rémission\s+(?:complète|partielle)?|rechute|récidive)\b',
-
-        # Infectieux
-        r'\b(?:VIH|SIDA|infection\s+à\s+VIH|'
-        r'hépatite\s+[ABC]\s+(?:chronique|aiguë)?|'
-        r'infection\s+(?:urinaire|pulmonaire|cutanée|ostéo-articulaire)|'
-        r'sepsis|choc\s+septique|bactériémie|'
-        r'endocardite|méningite|encéphalite)\b',
-
-        # Dermatologique
-        r'\b(?:psoriasis|eczéma|dermatite\s+atopique|'
-        r'urticaire\s+chronique|pemphigoïde|'
-        r'mélanome|carcinome\s+(?:basocellulaire|spinocellulaire))\b',
-
-        # Ophtalmologique
-        r'\b(?:glaucome|DMLA|dégénérescence\s+maculaire|'
-        r'cataracte|rétinopathie\s+diabétique|'
-        r'décollement\s+de\s+rétine)\b',
-
-        # Hématologique
-        r'\b(?:anémie\s+(?:ferriprive|par\s+carence\s+en\s+B12|'
-        r'hémolytique|aplasique|falciforme)?|'
-        r'thrombopénie|polyglobulie|'
-        r'drépanocytose|thalassémie|'
-        r'hémophilie|maladie\s+de\s+Willebrand)\b',
-    ],
-
-    # --------------------------------------------------------
-    # EXAMENS ET BILANS
-    # --------------------------------------------------------
-    "examens": [
-        # Imagerie
-        r'\b(?:radio(?:graphie)?|Rx|'
-        r'scanner|TDM|tomodensitométrie|'
-        r'IRM|imagerie\s+par\s+résonance\s+magnétique|'
-        r'échographie|écho(?:graphie)?|doppler|'
-        r'scintigraphie|TEP|PET[-\s]scan|'
-        r'mammographie|ostéodensitométrie|DEXA|'
-        r'endoscopie|coloscopie|fibroscopie|gastroscopie|'
-        r'FOGD|bronchoscopie|cystoscopie|'
-        r'angiographie|artériographie)\b',
-
-        # Biologie
-        r'\b(?:NFS|numération\s+formule\s+sanguine|hémogramme|'
-        r'bilan\s+(?:lipidique|hépatique|rénal|thyroïdien|'
-        r'inflammatoire|martial|vitaminique|hormonal)|'
-        r'ionogramme\s+(?:sanguin|urinaire)?|'
-        r'CRP|VS|fibrinogène|'
-        r'ECBU|bandelette\s+urinaire|BU|CBEU|'
-        r'HbA1c|glycémie\s+à\s+jeun|HGPO|'
-        r'TSH|T3|T4|T3L|T4L|'
-        r'PSA|CA\s*125|CA\s*19[-\s]9|ACE|AFP|CA\s*15[-\s]3|'
-        r'électrophorèse\s+(?:des\s+protéines)?|'
-        r'protéinurie|microalbuminurie|'
-        r'coagulation|TP|TCA|INR|D-dimères|facteur\s+V|'
-        r'ferritine|fer\s+sérique|transferrine|'
-        r'vitamine\s+(?:D|B12|B9)|acide\s+folique|'
-        r'créatinine|urée|acide\s+urique|'
-        r'transaminases|ASAT|ALAT|GGT|PAL|bilirubine|'
-        r'albumine|protéines\s+totales)\b',
-
-        # Fonctionnel
-        r'\b(?:ECG|électrocardiogramme|'
-        r'EFR|épreuve\s+fonctionnelle\s+respiratoire|'
-        r'VEMS|CVF|DEP|'
-        r'épreuve\s+d\'effort|test\s+d\'effort|'
-        r'holter\s+(?:ECG|tensionnel)?|'
-        r'MAPA|monitoring\s+tensionnel|'
-        r'audiogramme|audiométrie|'
-        r'électromyogramme|EMG|'
-        r'EEG|électroencéphalogramme|'
-        r'potentiels\s+évoqués)\b',
-    ],
+Réponse attendue :
+{
+  "pathologies_actives": ["Ménopause subatrophique"],
+  "antecedents_medicaux": [],
+  "antecedents_chirurgicaux": [],
+  "allergies_intolerances": [],
+  "traitements_en_cours": [],
+  "constantes_biologiques": [],
+  "vaccinations": [],
+  "facteurs_risque": [],
+  "examens_bilans": ["Frottis de dépistage cervico-vaginal : satisfaisant, non inflammatoire, absence de cellule suspecte"],
+  "dates_importantes": ["Prescrit le 09/10/2014", "Enregistré le 10/10/2014"]
 }
 
-# ============================================================
-# MOTS-CLÉS CONTEXTUELS EXHAUSTIFS
-# ============================================================
+Remarque : le texte source contient DEUX dates distinctes, et les deux sont extraites.
+La conclusion médicale ("ménopause subatrophique") est reprise dans les pathologies,
+pas seulement mentionnée dans les examens.
 
-ANTECEDENT_KEYWORDS = [
-    'atcd', 'atcds', 'antcd', 'atcd.',
-    'antécédent', 'antécédents', 'antecedent', 'antecedents',
-    'antécédente', 'antécédentes',
-    'antécédent chirurgical', 'antécédents chirurgicaux',
-    'antécédent médical', 'antécédents médicaux',
-    'antécédent familial', 'antécédents familiaux',
-    'antécédent obstétrical', 'antécédents obstétricaux',
-    'antécédent gynécologique', 'antécédents gynécologiques',
-    'antécédent personnel', 'antécédents personnels',
-    'histoire de la maladie', 'hdm', 'hdlm', 'hdlt',
-    'histoire médicale', 'passé médical',
-    'souffre de', 'souffrait de', 'souffre depuis',
-    'diagnostiqué', 'diagnostiquée', 'diagnostic de',
-    'connu pour', 'connue pour', 'connu comme',
-    'suivi pour', 'suivie pour', 'prise en charge pour',
-    'traité pour', 'traitée pour',
-    'porteur de', 'porteuse de',
-    'présente', 'présentait', 'présente un', 'présente une',
-    'a présenté', 'a développé', 'a souffert de',
-    'opéré de', 'opérée de', 'opéré en', 'opérée en',
-    'hospitalisé pour', 'hospitalisée pour',
-    'hospitalisé en', 'hospitalisée en',
-    'consulte pour', 'motif de consultation',
-    'sur le plan médical', 'sur le plan chirurgical',
-    'sur le plan gynécologique', 'sur le plan obstétrical',
-    'sur le plan familial', 'sur le plan cardiologique',
-    'sur le plan neurologique', 'sur le plan psychiatrique',
-    'dans ses antécédents', 'dans ses atcd',
-    'notion de', 'antérieurement',
-]
+Réponds STRICTEMENT en JSON valide, sans texte avant ou après, selon ce schéma exact :
 
-TRAITEMENT_KEYWORDS = [
-    'traitement', 'traitements', 'thérapeutique', 'thérapeutiques',
-    'prescription', 'prescriptions', 'ordonnance',
-    'prend', 'prenait', 'prendre',
-    'prescrit', 'prescrite', 'prescrits', 'prescrites',
-    'administré', 'administrée', 'administrés',
-    'sous', 'mis sous', 'mise sous', 'passé sous',
-    'initié', 'initiée', 'débuté', 'débutée',
-    'arrêté', 'arrêtée', 'suspendu', 'suspendue', 'stoppé',
-    'continué', 'maintenu', 'poursuivi', 'reconduit',
-    'traitement en cours', 'traitement habituel',
-    'traitement au long cours', 'traitement chronique',
-    'traitement de fond', 'traitement de crise',
-    'traitement symptomatique', 'traitement curatif',
-    'posologie', 'dose', 'dosage', 'schéma thérapeutique',
-    'prise', 'prises', 'comprimé', 'gélule', 'ampoule',
-    'ttt', 'TTT', 'Ttt',
-    'examens prescrits', 'traitements prescrits',
-    'médicaments prescrits', 'ordonnancé',
-]
-
-ALLERGIE_KEYWORDS = [
-    'allergie', 'allergies', 'allergique', 'allergiques',
-    'intolérance', 'intolérances', 'intolérant', 'intolérante',
-    'hypersensibilité', 'hypersensible',
-    'contre-indication', 'contre-indiqué', 'contre-indiquée',
-    'réaction allergique', 'réaction anaphylactique',
-    'choc anaphylactique', 'anaphylaxie',
-    'urticaire', 'angioedème', 'oedème de Quincke',
-    'allergie médicamenteuse', 'allergie alimentaire',
-    'allergie cutanée', 'allergie respiratoire',
-    'terrain allergique', 'atopique', 'atopie',
-    'eczéma allergique', 'rhinite allergique',
-]
-
-VACCINATION_KEYWORDS = [
-    'vaccin', 'vaccins', 'vaccination', 'vaccinations',
-    'vacciné', 'vaccinée', 'vaccinés', 'vaccinées',
-    'rappel', 'rappels', 'primo-vaccination',
-    'calendrier vaccinal', 'carnet de vaccination',
-    'carnet de santé',
-    'à jour', 'non à jour', 'incomplet', 'à mettre à jour',
-    'immunisation', 'immunisé', 'immunisée',
-    'prochain rappel', 'dernière vaccination',
-]
-
-FACTEUR_RISQUE_KEYWORDS = [
-    'facteur de risque', 'facteurs de risque',
-    'fdr', 'fdrs',
-    'mode de vie', 'habitus', 'hygiène de vie',
-    'tabac', 'tabagisme', 'fumeur', 'fumeuse',
-    'alcool', 'alcoolisme', "consommation d'alcool",
-    'obésité', 'surpoids', 'poids excessif',
-    'sédentarité', 'activité physique',
-    'stress', 'anxiété', 'facteur psychosocial',
-    'antécédents familiaux', 'hérédité', 'prédisposition',
-    'profession', 'exposition professionnelle',
-    'alimentation', 'régime alimentaire',
-    'risque cardiovasculaire', 'terrain vasculaire',
-]
+{
+  "pathologies_actives": ["string", ...],
+  "antecedents_medicaux": ["string", ...],
+  "antecedents_chirurgicaux": ["string", ...],
+  "allergies_intolerances": ["string", ...],
+  "traitements_en_cours": ["string", ...],
+  "constantes_biologiques": ["string", ...],
+  "vaccinations": ["string", ...],
+  "facteurs_risque": ["string", ...],
+  "examens_bilans": ["string", ...],
+  "dates_importantes": ["string", ...]
+}
+"""
 
 
 class NERExtractor:
     """
-    Module d'extraction d'entités médicales NER.
-    Conforme au référentiel VSM de la HAS et CI-SIS.
+    Extraction d'entités médicales 100% via Qwen2.5-VL (mode texte, Ollama).
+    Conforme au référentiel VSM HAS / CI-SIS.
 
-    Approche hybride exhaustive :
-    1. Règles/Regex → médicaments, dates, constantes,
-                      allergies, vaccinations, pathologies,
-                      facteurs de risque, examens
-    2. DrBERT-4GB   → antécédents, diagnostics complexes,
-                      entités contextuelles
-
-    Entités extraites (conformes VSM HAS) :
+    Entités extraites :
     - Pathologies actives
     - Antécédents médicaux et chirurgicaux
     - Allergies et intolérances
@@ -547,266 +138,222 @@ class NERExtractor:
     - Dates importantes
     """
 
-    def __init__(self, use_drbert: bool = True):
-        self.use_drbert = use_drbert
-        self._ner_pipeline = None
-        if use_drbert:
-            self._load_drbert()
+    def __init__(self, ollama_url: str = OLLAMA_URL, model: str = MODEL_NAME,
+                 num_ctx_max: int = NUM_CTX_MAX, timeout: int = TIMEOUT):
+        self.ollama_url = ollama_url
+        self.model = model
+        self.num_ctx_max = num_ctx_max
+        self.timeout = timeout
 
-    def _load_drbert(self):
-        """Charge DrBERT-4GB-CP-CamemBERT."""
-        try:
-            print("    ⟳ Chargement DrBERT-4GB-CP-CamemBERT...")
-            tokenizer = AutoTokenizer.from_pretrained(
-                "Dr-BERT/DrBERT-4GB-CP-CamemBERT"
-            )
-            model = AutoModelForTokenClassification.from_pretrained(
-                "Dr-BERT/DrBERT-4GB-CP-CamemBERT"
-            )
-            self._ner_pipeline = pipeline(
-                "ner",
-                model=model,
-                tokenizer=tokenizer,
-                aggregation_strategy="simple",
-                device=-1
-            )
-            print("    ✓ DrBERT-4GB chargé")
-        except Exception as e:
-            print(f"    ⚠️ DrBERT non disponible : {e}")
-            print("    → Extraction par règles uniquement")
-            self._ner_pipeline = None
-
+    # ------------------------------------------------------------------
+    # Normalisation (reprise de la v1, toujours utile en amont de Qwen)
+    # ------------------------------------------------------------------
     def _normalize_text(self, text: str) -> str:
-        """Normalise le texte pour l'extraction."""
         text = re.sub(r'\s+', ' ', text)
         text = text.replace('–', '-').replace('—', '-')
         text = text.replace('œ', 'oe').replace('æ', 'ae')
         return text.strip()
 
-    def _extract_by_regex(self, text: str) -> dict:
-        """Extraction exhaustive par règles et patterns regex."""
-        results = {
-            "medicaments": [],
-            "dates": [],
-            "constantes": [],
-            "allergies": [],
-            "vaccinations": [],
-            "antecedents_chirurgicaux": [],
-            "facteurs_risque": [],
-            "pathologies": [],
-            "examens": []
-        }
-
-        for category, patterns in PATTERNS.items():
-            for pattern in patterns:
-                try:
-                    matches = re.finditer(pattern, text, re.IGNORECASE)
-                    for match in matches:
-                        
-                        # Cas spécial allergies — capturer groupe 1 ET groupe 2
-                        if category == 'allergies':
-                            for i in range(1, (match.lastindex or 0) + 1):
-                                grp = match.group(i)
-                                if grp:
-                                    entity = grp.strip()
-                                    if entity and len(entity) > 2:
-                                        if entity not in results[category]:
-                                            results[category].append(entity)
-                            continue
-                        
-                        # Constantes → group(0) complet avec contexte
-                        if category == 'constantes':
-                            entity = match.group(0).strip()
-
-                        # Dates → group(0) complet
-                        elif category == 'dates':
-                            entity = match.group(0).strip()
-
-                        # Autres → group(1) si existe
-                        elif match.lastindex and match.lastindex >= 1:
-                            entity = match.group(1).strip()
-                        else:
-                            entity = match.group(0).strip()
-
-                        if entity and len(entity) > 2:
-                            if entity not in results[category]:
-                                results[category].append(entity)
-                                
-                except Exception:
-                    continue
-
-        return results
-
-    def _get_context(self, text: str, word: str, window: int = 100) -> str:
-        """Retourne le contexte autour d'un mot."""
-        text_lower = text.lower()
-        word_lower = word.lower()
-        pos = text_lower.find(word_lower)
-        if pos == -1:
-            return ""
-        return text_lower[max(0, pos - window):pos + window]
-
-    def _extract_by_drbert(self, text: str) -> dict:
-        """Extraction par DrBERT-4GB avec classification contextuelle."""
-        if not self._ner_pipeline:
-            return {
-                "antecedents": [],
-                "diagnostics": [],
-                "traitements": [],
-                "autres": []
-            }
-
-        results = {
-            "antecedents": [],
-            "diagnostics": [],
-            "traitements": [],
-            "autres": []
-        }
-
-        try:
-            # Découpage en chunks de 400 caractères
-            max_length = 400
-            words = text.split()
-            chunks = []
-            current_chunk = []
-            current_len = 0
-
-            for word in words:
-                current_chunk.append(word)
-                current_len += len(word) + 1
-                if current_len > max_length:
-                    chunks.append(' '.join(current_chunk))
-                    current_chunk = []
-                    current_len = 0
-
-            if current_chunk:
-                chunks.append(' '.join(current_chunk))
-
-            all_entities = []
-            for chunk in chunks:
-                entities = self._ner_pipeline(chunk)
-                all_entities.extend(entities)
-
-            for entity in all_entities:
-                word = entity.get('word', '').strip()
-                score = entity.get('score', 0)
-
-                if not word or score < 0.7 or len(word) < 2:
-                    continue
-
-                context = self._get_context(text, word)
-
-                is_antecedent = any(kw in context for kw in ANTECEDENT_KEYWORDS)
-                is_traitement = any(kw in context for kw in TRAITEMENT_KEYWORDS)
-
-                if is_antecedent and word not in results["antecedents"]:
-                    results["antecedents"].append(word)
-                elif is_traitement and word not in results["traitements"]:
-                    results["traitements"].append(word)
-                elif word not in results["autres"]:
-                    results["autres"].append(word)
-
-        except Exception as e:
-            print(f"    ⚠️ Erreur DrBERT NER : {e}")
-
-        return results
-
-    def _deduplicate(self, entities: list) -> list:
-        """Supprime les doublons en ignorant la casse."""
-        seen = set()
-        unique = []
-        for entity in entities:
-            key = entity.lower().strip()
-            if key not in seen and len(key) > 2:
-                seen.add(key)
-                unique.append(entity)
-        return unique
-    
-    def _filter_dates(self, dates: list) -> list:
-        """Supprime les dates partielles contenues dans des dates complètes."""
-        filtered = []
-        for date in dates:
-            is_substring = any(
-                date != other and date in other
-                for other in dates
-            )
-            if not is_substring:
-                filtered.append(date)
-        return filtered
-
+    # ------------------------------------------------------------------
+    # Point d'entrée principal — UNE page / UN texte
+    # (signature conservée : extract(text, document_type))
+    # ------------------------------------------------------------------
     def extract(self, text: str, document_type: str = "inconnu") -> dict:
-        """
-        Point d'entrée principal.
-        Extraction hybride exhaustive conforme VSM HAS.
-        """
         if not text or len(text.strip()) < 10:
             return self._empty_result("Texte vide ou trop court")
 
         text = self._normalize_text(text)
+        entities = self._call_qwen(text)
 
-        regex_results = self._extract_by_regex(text)
-        drbert_results = self._extract_by_drbert(text)
-
-        result = {
-            "pathologies_actives": self._deduplicate(
-                regex_results.get("pathologies", [])
-            ),
-            "antecedents_medicaux": self._deduplicate(
-                drbert_results.get("antecedents", []) +
-                regex_results.get("pathologies", [])
-            ),
-            "antecedents_chirurgicaux": self._deduplicate(
-                regex_results.get("antecedents_chirurgicaux", [])
-            ),
-            "allergies_intolerances": self._deduplicate(
-                regex_results.get("allergies", [])
-            ),
-            "traitements_en_cours": self._deduplicate(
-                regex_results.get("medicaments", []) +
-                drbert_results.get("traitements", [])
-            ),
-            "constantes_biologiques": self._deduplicate(
-                regex_results.get("constantes", [])
-            ),
-            "vaccinations": self._deduplicate(
-                regex_results.get("vaccinations", [])
-            ),
-            "facteurs_risque": self._deduplicate(
-                regex_results.get("facteurs_risque", [])
-            ),
-            "examens_bilans": self._deduplicate(
-                regex_results.get("examens", [])
-            ),
-            "dates_importantes": self._filter_dates(
-                self._deduplicate(regex_results.get("dates", []))
-            ),
-            "autres_entites": self._deduplicate(
-                drbert_results.get("autres", [])
-            ),
-            "document_type": document_type,
-            "extraction_method": (
-                "hybrid_regex_drbert"
-                if self._ner_pipeline
-                else "regex_only"
-            )
-        }
-
+        result = {key: entities.get(key, []) for key in OUTPUT_SCHEMA_KEYS}
+        result["document_type"] = document_type
+        result["extraction_method"] = "qwen_only"
         return result
 
     def _empty_result(self, reason: str) -> dict:
-        return {
-            "pathologies_actives": [],
-            "antecedents_medicaux": [],
-            "antecedents_chirurgicaux": [],
-            "allergies_intolerances": [],
-            "traitements_en_cours": [],
-            "constantes_biologiques": [],
-            "vaccinations": [],
-            "facteurs_risque": [],
-            "examens_bilans": [],
-            "dates_importantes": [],
-            "autres_entites": [],
-            "document_type": "inconnu",
-            "extraction_method": "none",
-            "reason": reason
+        result = {key: [] for key in OUTPUT_SCHEMA_KEYS}
+        result["document_type"] = "inconnu"
+        result["extraction_method"] = "none"
+        result["reason"] = reason
+        return result
+
+    # ------------------------------------------------------------------
+    # num_ctx dynamique : évite d'allouer 8192 tokens de contexte pour
+    # une page de quelques lignes. On estime ~1 token ≈ 4 caractères
+    # (approximation standard pour du français), on ajoute le system
+    # prompt (+few-shot) + une marge pour la réponse JSON générée.
+    # ------------------------------------------------------------------
+    def _compute_num_ctx(self, text: str) -> int:
+        estimated_tokens = len(text) // 4
+        prompt_overhead = len(SYSTEM_PROMPT) // 4
+        response_margin = 512  # marge pour le JSON de sortie
+
+        needed = estimated_tokens + prompt_overhead + response_margin
+        # arrondi au multiple de 512 supérieur (Ollama gère mieux ces tailles)
+        needed = ((needed // 512) + 1) * 512
+
+        return max(NUM_CTX_MIN, min(needed, self.num_ctx_max))
+
+    # ------------------------------------------------------------------
+    # Appel Qwen (texte pur, pas vision) + parsing robuste
+    # ------------------------------------------------------------------
+    def _call_qwen(self, text: str) -> dict:
+        empty = {k: [] for k in OUTPUT_SCHEMA_KEYS}
+        num_ctx = self._compute_num_ctx(text)
+
+        payload = {
+            "model": self.model,
+            "messages": [
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": f"Texte médical à analyser :\n\n{text}"},
+            ],
+            "stream": False,
+            "format": "json",
+            "options": {
+                "num_ctx": num_ctx,
+                "temperature": 0.1,
+            },
         }
+
+        logger.info(f"Appel Qwen NER — texte={len(text)} caractères, num_ctx={num_ctx}")
+
+        try:
+            response = requests.post(self.ollama_url, json=payload, timeout=self.timeout)
+            response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Erreur appel Qwen (NER) : {e}")
+            return empty
+
+        try:
+            content = response.json()["message"]["content"]
+        except (KeyError, json.JSONDecodeError) as e:
+            logger.error(f"Réponse Ollama inattendue (NER) : {e}")
+            return empty
+
+        return self._parse_json_response(content)
+
+    def _parse_json_response(self, content: str) -> dict:
+        empty = {k: [] for k in OUTPUT_SCHEMA_KEYS}
+
+        try:
+            parsed = json.loads(content)
+            return self._sanitize(parsed)
+        except json.JSONDecodeError:
+            pass
+
+        match = re.search(r"\{.*\}", content, re.DOTALL)
+        if match:
+            try:
+                parsed = json.loads(match.group(0))
+                return self._sanitize(parsed)
+            except json.JSONDecodeError:
+                pass
+
+        logger.warning("Impossible de parser le JSON Qwen (NER), résultat vide retourné.")
+        logger.debug(f"Réponse brute Qwen (NER) : {content[:500]}")
+        return empty
+
+    def _sanitize(self, parsed: dict) -> dict:
+        clean = {}
+        for key in OUTPUT_SCHEMA_KEYS:
+            value = parsed.get(key, [])
+            if not isinstance(value, list):
+                value = []
+            clean[key] = [str(v).strip() for v in value if str(v).strip()]
+        return clean
+
+    # ------------------------------------------------------------------
+    # Extraction sur un DOCUMENT entier (toutes les pages) + fusion
+    # ------------------------------------------------------------------
+    def extract_document(self, pages: list[str], document_type: str = "inconnu",
+                          tracker=None) -> dict:
+        """
+        pages : liste de textes OCR, un par page (dans l'ordre du document).
+        tracker : PipelineTracker optionnel pour logguer la progression.
+
+        Retourne le JSON fusionné et dédoublonné (fuzzy matching) au niveau
+        du document entier, avec les mêmes clés que extract().
+        """
+        per_page_results = []
+
+        for i, page_text in enumerate(pages, start=1):
+            if tracker:
+                tracker.update(step="ner_extraction", page=i, total=len(pages))
+
+            page_result = self.extract(page_text, document_type=document_type)
+            per_page_results.append(page_result)
+
+            nb_entities = sum(len(page_result[k]) for k in OUTPUT_SCHEMA_KEYS)
+            logger.info(f"Page {i}/{len(pages)} : NER terminé ({nb_entities} entités).")
+
+        merged = self.merge_entities(per_page_results)
+        merged["document_type"] = document_type
+        merged["extraction_method"] = "qwen_only"
+        return merged
+
+    # ------------------------------------------------------------------
+    # Fusion + dédoublonnage fuzzy (sans appel LLM, difflib stdlib)
+    # Méthode publique : réutilisable depuis test_pipeline.py pour fusionner
+    # les résultats NER de plusieurs pages, avec la même logique que
+    # extract_document() (garde toujours la formulation la plus détaillée).
+    # ------------------------------------------------------------------
+    def merge_entities(self, per_page_results: list[dict]) -> dict:
+        merged = {key: [] for key in OUTPUT_SCHEMA_KEYS}
+
+        for page_result in per_page_results:
+            for key in OUTPUT_SCHEMA_KEYS:
+                for value in page_result.get(key, []):
+                    self._add_with_dedup(merged[key], value)
+
+        return merged
+
+    def _add_with_dedup(self, existing_list: list, new_value: str) -> None:
+        """
+        Ajoute new_value à existing_list, en fusionnant avec un doublon proche.
+        Deux critères de doublon (l'un ou l'autre suffit) :
+          1. Similarité globale (SequenceMatcher) >= FUZZY_DEDUP_THRESHOLD
+             -> attrape les reformulations proches ("diabete type 2" vs
+             "diabete de type 2").
+          2. Inclusion : la version courte est un sous-ensemble textuel de
+             la version longue -> attrape le cas fréquent où Qwen extrait la
+             même entité avec plus de détails sur une autre page
+             ("Metformine 1000mg" vs "Metformine 1000mg matin et soir").
+        Dans les deux cas, on garde la formulation la plus longue/détaillée.
+        """
+        new_norm = new_value.lower().strip()
+
+        for i, existing_value in enumerate(existing_list):
+            existing_norm = existing_value.lower().strip()
+
+            similarity = SequenceMatcher(None, existing_norm, new_norm).ratio()
+            # Garde-fou : n'applique la règle d'inclusion qu'à partir de 6
+            # caractères, pour éviter qu'une entité courte ("TA", "IMC")
+            # ne soit à tort considérée comme un doublon d'une autre entité
+            # qui la contient juste par hasard ("HTA" contient "TA").
+            is_substring = (
+                len(existing_norm) >= 6 and len(new_norm) >= 6
+                and (existing_norm in new_norm or new_norm in existing_norm)
+            )
+
+            if similarity >= FUZZY_DEDUP_THRESHOLD or is_substring:
+                if len(new_value) > len(existing_value):
+                    existing_list[i] = new_value
+                return
+
+        existing_list.append(new_value)
+
+
+# ----------------------------------------------------------------------
+# Exemple d'utilisation (à intégrer dans test_pipeline.py)
+# ----------------------------------------------------------------------
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+
+    extractor = NERExtractor()
+
+    sample_text = """
+    0780 POLE GYNECOLOGIE OBSTETRIQUE, MEDECINE FCETALE, REPRODUCTION ET GENETIQUE GyNecoLogiE OnsteTRiQuE A > Gynecologie hospitalisation, Consultations externes et echographies, Bloc operatoire, Orthogenie (Centre IVG, planification familiale) Centre d'Accueil des Victimes Presumees d'Abus Sexuels GynecoLogIE OsstetriQue B > Obstetrique hospitalisation, Salle de Naissances, Urgences, Grossesses pathologiques, Medecine Fcetale MEDEcINE ET BIoLOGIE DE LA RepRoDucTION > Consultations CECOS FIV, Hospitalisations de jOur, laboratoire GENETiQue>Consultations, Laboratoires, Fcetopathologie Gynecologie-Obstetrique A Courrier adresse a:Dr Copiea:-Dr le 29 avril 2011 No Dossier: COMPTE-RENDU DE CONSULTATION Chere Je t'adresse comme convenu Madame BANANE Sophie nee le 17/09/1962, pour la prise en charge de dysurie.. Dans ses antecedents on note : Sur le plan familial, RAS Sur le plan chirurgical, Fracture cubitale. Cholecystectomie. Sur le plan medical, Pneumothorax. Sur le plan obstetrical, Une naissance par les voies naturelles. Sur le plan gynecologique,. Ses frottis, mammographies, echographies sont a jour. Cette patiente est menopausee.. L'histoire de la maladie commence en 2008 au traitement chirurgical d'un kyste uretral par les voies naturelles. A la suite de cette intervention, des douleurssupportables ont necessite un traitement par Rivotril et la patiente a vu apparaitre des fuites urinaires apres chaque miction, en quantite selon elle assez importante, necessitant la mise en place d'un protege slip en permanence.
+    """
+
+    result = extractor.extract(sample_text, document_type="ordonnance")
+    print(json.dumps(result, indent=2, ensure_ascii=False))

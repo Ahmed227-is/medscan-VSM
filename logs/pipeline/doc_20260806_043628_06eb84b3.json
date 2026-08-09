@@ -1,0 +1,132 @@
+{
+  "document_id": "doc_20260806_043628_06eb84b3",
+  "source": "data/raw/BANANE_Sophie.pdf",
+  "submitted_at": "2026-08-06T04:36:28.308223",
+  "status": "failed",
+  "steps": {
+    "pdf_handler": {
+      "status": "completed",
+      "started_at": "2026-08-06T04:36:28.308405",
+      "completed_at": "2026-08-06T04:39:54.256783",
+      "duration_seconds": 205.948,
+      "details": {
+        "type": "pdf",
+        "total_pages": 114
+      },
+      "error": null
+    },
+    "preprocessor": {
+      "status": "completed",
+      "started_at": "2026-08-06T04:39:56.577007",
+      "completed_at": "2026-08-06T04:39:58.128255",
+      "duration_seconds": 1.551,
+      "details": {
+        "page": 1,
+        "quality_score": 0.667,
+        "needs_llm_fallback": false
+      },
+      "error": null
+    },
+    "ocr": {
+      "status": "failed",
+      "started_at": "2026-08-06T04:39:58.128571",
+      "completed_at": null,
+      "duration_seconds": 2.343,
+      "details": {},
+      "error": "LLMFallback.should_fallback() got an unexpected keyword argument 'linguistic_score'"
+    },
+    "llm_fallback": {
+      "status": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "duration_seconds": null,
+      "details": {},
+      "error": null
+    },
+    "classification": {
+      "status": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "duration_seconds": null,
+      "details": {},
+      "error": null
+    },
+    "ner": {
+      "status": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "duration_seconds": null,
+      "details": {},
+      "error": null
+    },
+    "structuration": {
+      "status": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "duration_seconds": null,
+      "details": {},
+      "error": null
+    },
+    "vsm_generation": {
+      "status": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "duration_seconds": null,
+      "details": {},
+      "error": null
+    }
+  },
+  "audit_trail": [
+    {
+      "timestamp": "2026-08-06T04:36:28.308237",
+      "action": "document_submitted",
+      "details": "Document soumis : data/raw/BANANE_Sophie.pdf"
+    },
+    {
+      "timestamp": "2026-08-06T04:36:28.308408",
+      "action": "pdf_handler_started",
+      "details": "Étape pdf_handler démarrée"
+    },
+    {
+      "timestamp": "2026-08-06T04:39:54.256805",
+      "action": "pdf_handler_completed",
+      "details": "Étape pdf_handler terminée en 205.948s"
+    },
+    {
+      "timestamp": "2026-08-06T04:39:56.577016",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-06T04:39:58.128272",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.551s"
+    },
+    {
+      "timestamp": "2026-08-06T04:39:58.128576",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-06T04:40:00.473193",
+      "action": "ocr_failed",
+      "details": "Erreur : LLMFallback.should_fallback() got an unexpected keyword argument 'linguistic_score'"
+    },
+    {
+      "timestamp": "2026-08-06T04:40:00.473554",
+      "action": "pipeline_failed",
+      "details": "LLMFallback.should_fallback() got an unexpected keyword argument 'linguistic_score'"
+    }
+  ],
+  "errors": [
+    {
+      "step": "ocr",
+      "timestamp": "2026-08-06T04:40:00.471987",
+      "error": "LLMFallback.should_fallback() got an unexpected keyword argument 'linguistic_score'",
+      "correction_applied": null,
+      "duration_before_fail": 2.343
+    }
+  ],
+  "completed_at": "2026-08-06T04:40:00.473550",
+  "total_duration_seconds": null
+}

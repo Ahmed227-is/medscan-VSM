@@ -11,6 +11,7 @@ from src.ocr_engine import OCREngine
 from src.pipeline_tracker import PipelineTracker
 from src.document_classifier import DocumentClassifier
 from src.llm_fallback import LLMFallback
+from src.ner_extractor import NERExtractor
 
 
 def test_pipeline(file_path: str):
@@ -36,9 +37,8 @@ def test_pipeline(file_path: str):
         preprocessor = Preprocessor()
         ocr_engine = OCREngine()
         llm_fallback = LLMFallback()
-
-        # Zero-Shot activé — utilisé quand keywords insuffisants
         classifier = DocumentClassifier(use_zeroshot=True)
+        ner = NERExtractor()  # v2 : 100% Qwen texte (Ollama), plus de use_drbert
 
         pages_results = []
 
@@ -72,14 +72,13 @@ def test_pipeline(file_path: str):
                 ocr_result = ocr_engine.extract_from_processed(preprocess_result)
                 conf = ocr_result['confidence']
 
-                # Vérification fallback nécessaire
                 needs_fallback, fallback_reason = llm_fallback.should_fallback(
                     quality_score=preprocess_result['quality_score'],
-                    ocr_confidence=conf['global_score']
+                    ocr_confidence=conf['global_score'],
+                    linguistic_score=conf.get('linguistic_quality', {}).get('linguistic_score', 1.0)
                 )
 
                 if needs_fallback:
-                    # PaddleOCR insuffisant → Qwen prend le relais
                     tracker.complete_step("ocr", {
                         "page": page_num,
                         "skipped": True,
@@ -88,21 +87,24 @@ def test_pipeline(file_path: str):
                     print(f"    ⚠️ Fallback déclenché : {fallback_reason}")
 
                     tracker.start_step("llm_fallback")
-                    ocr_result = llm_fallback.extract_text(
-                        preprocess_result['processed_path']
-                    )
+                    ocr_result = llm_fallback.extract_text(page_path)
                     conf = ocr_result['confidence']
                     tracker.complete_step("llm_fallback", {
                         "page": page_num,
                         "method": ocr_result.get('method'),
                         "global_score": conf['global_score'],
-                        "words_extracted": len(ocr_result['full_text'].split())
+                        "words_extracted": len(ocr_result['full_text'].split()),
+                        "signal": ocr_result.get('signal'),
+                        "requires_manual_review": ocr_result.get('requires_manual_review', False)
                     })
                     print(f"    ✓ Méthode         : {ocr_result.get('method')}")
                     print(f"    ✓ Mots extraits   : {len(ocr_result['full_text'].split())}")
+                    if ocr_result.get('signal'):
+                        print(f"    ℹ️ Signal          : {ocr_result.get('signal')}")
+                    if ocr_result.get('requires_manual_review'):
+                        print(f"    ⚠️ Révision manuelle requise")
 
                 else:
-                    # PaddleOCR suffisant
                     tracker.complete_step("ocr", {
                         "page": page_num,
                         "global_score": conf['global_score'],
@@ -115,10 +117,10 @@ def test_pipeline(file_path: str):
                         "llm_fallback",
                         f"PaddleOCR suffisant (score={conf['global_score']})"
                     )
-                    print(f"    ✓ Score composite : {conf['global_score']}")
-                    print(f"    ✓ Moyenne conf    : {conf['mean_confidence']}")
-                    print(f"    ✓ Minimum conf    : {conf['min_confidence']}")
-                    print(f"    ✓ Blocs détectés  : {ocr_result.get('total_blocks', 0)}")
+                    print(f"    ✓ Score composite      : {conf['global_score']}")
+                    print(f"    ✓ Moyenne conf         : {conf['mean_confidence']}")
+                    print(f"    ✓ Minimum conf         : {conf['min_confidence']}")
+                    print(f"    ✓ Blocs détectés       : {ocr_result.get('total_blocks', 0)}")
                     ling = conf.get('linguistic_quality', {})
                     print(f"    ✓ Score linguistique   : {ling.get('linguistic_score', 'N/A')}")
                     print(f"    ✓ Texte lisible        : {ling.get('is_readable', 'N/A')}")
@@ -150,6 +152,36 @@ def test_pipeline(file_path: str):
                 tracker.fail_step("classification", str(e))
                 raise
 
+            # ÉTAPE 4 : NER médical (Qwen2.5 texte, via Ollama)
+            print(f"\n[4] Extraction entités médicales (NER)...")
+            tracker.start_step("ner")
+            try:
+                ner_result = ner.extract(
+                    ocr_result['full_text'],
+                    document_type=classification['predicted_type']
+                )
+                tracker.complete_step("ner", {
+                    "page": page_num,
+                    "method": ner_result['extraction_method'],
+                    "pathologies": len(ner_result['pathologies_actives']),
+                    "traitements": len(ner_result['traitements_en_cours']),
+                    "allergies": len(ner_result['allergies_intolerances']),
+                    "constantes": len(ner_result['constantes_biologiques']),
+                    "dates": len(ner_result['dates_importantes'])
+                })
+                print(f"    ✓ Pathologies      : {ner_result['pathologies_actives']}")
+                print(f"    ✓ Traitements      : {ner_result['traitements_en_cours']}")
+                print(f"    ✓ Allergies        : {ner_result['allergies_intolerances']}")
+                print(f"    ✓ Constantes       : {ner_result['constantes_biologiques']}")
+                print(f"    ✓ Antéc. chir      : {ner_result['antecedents_chirurgicaux']}")
+                print(f"    ✓ Facteurs risque  : {ner_result['facteurs_risque']}")
+                print(f"    ✓ Vaccinations     : {ner_result['vaccinations']}")
+                print(f"    ✓ Examens          : {ner_result['examens_bilans']}")
+                print(f"    ✓ Dates            : {ner_result['dates_importantes']}")
+            except Exception as e:
+                tracker.fail_step("ner", str(e))
+                raise
+
             pages_results.append({
                 "page_number": page_num,
                 "page_path": page_path,
@@ -160,7 +192,10 @@ def test_pipeline(file_path: str):
                 "needs_llm_fallback": ocr_result['needs_llm_fallback'],
                 "total_blocks": ocr_result.get('total_blocks', 0),
                 "ocr_method": ocr_result.get('method', 'paddleocr'),
-                "classification": classification
+                "signal": ocr_result.get('signal'),
+                "requires_manual_review": ocr_result.get('requires_manual_review', False),
+                "classification": classification,
+                "ner": ner_result
             })
 
         # Fusion texte toutes pages
@@ -169,6 +204,13 @@ def test_pipeline(file_path: str):
         # Type dominant du document
         all_types = [p['classification']['predicted_type'] for p in pages_results]
         dominant_type = max(set(all_types), key=all_types.count)
+
+        # NER fusionné toutes pages — fuzzy dedup (voir ner_extractor.merge_entities)
+        # Remplace l'ancienne fusion par égalité stricte : gère les entités
+        # reformulées différemment d'une page à l'autre (ex: "diabete type 2"
+        # vs "diabete de type 2") et garde toujours la formulation la plus
+        # détaillée (ex: "Metformine 1000mg" -> "Metformine 1000mg matin et soir").
+        merged_ner = ner.merge_entities([p['ner'] for p in pages_results])
 
         # Statistiques globales
         ocr_methods = [p['ocr_method'] for p in pages_results]
@@ -188,8 +230,13 @@ def test_pipeline(file_path: str):
                 "pages_paddleocr": ocr_methods.count('paddleocr'),
                 "pages_qwen": sum(1 for m in ocr_methods if 'qwen' in str(m)),
                 "pages_zeroshot": zeroshot_used,
-                "pages_inconnu": all_types.count('inconnu')
+                "pages_inconnu": all_types.count('inconnu'),
+                "pages_manual_review": sum(
+                    1 for p in pages_results
+                    if p.get('requires_manual_review', False)
+                )
             },
+            "ner_global": merged_ner,
             "pages": pages_results,
             "full_text": full_document_text,
             "tracking": tracker.get_summary()
@@ -200,16 +247,25 @@ def test_pipeline(file_path: str):
         with open(output_json, 'w', encoding='utf-8') as f:
             json.dump(final_result, f, ensure_ascii=False, indent=2, default=str)
 
-        # Affichage résumé
+        # Affichage résumé final
         print(f"\n{'=' * 60}")
         print(f"RÉSUMÉ FINAL")
         print(f"{'=' * 60}")
-        print(f"✓ Type dominant        : {dominant_type}")
-        print(f"✓ Pages PaddleOCR      : {final_result['stats']['pages_paddleocr']}")
-        print(f"✓ Pages Qwen fallback  : {final_result['stats']['pages_qwen']}")
-        print(f"✓ Pages Zero-Shot      : {final_result['stats']['pages_zeroshot']}")
-        print(f"✓ Pages non classifiées: {final_result['stats']['pages_inconnu']}")
-        print(f"✓ Résultat sauvegardé  : {output_json}")
+        print(f"✓ Type dominant           : {dominant_type}")
+        print(f"✓ Pages PaddleOCR         : {final_result['stats']['pages_paddleocr']}")
+        print(f"✓ Pages Qwen fallback     : {final_result['stats']['pages_qwen']}")
+        print(f"✓ Pages Zero-Shot         : {final_result['stats']['pages_zeroshot']}")
+        print(f"✓ Pages non classifiées   : {final_result['stats']['pages_inconnu']}")
+        print(f"✓ Pages révision manuelle : {final_result['stats']['pages_manual_review']}")
+        print(f"\n{'=' * 60}")
+        print(f"NER GLOBAL DU DOCUMENT")
+        print(f"{'=' * 60}")
+        for key, values in merged_ner.items():
+            if values:
+                print(f"✓ {key.upper()} :")
+                for v in values:
+                    print(f"    → {v}")
+        print(f"\n✓ Résultat sauvegardé : {output_json}")
 
         tracker.complete_pipeline()
         return final_result

@@ -150,7 +150,8 @@ Texte extrait :"""
     def should_fallback(
         self,
         quality_score: float,
-        ocr_confidence: float
+        ocr_confidence: float,
+        linguistic_score: float = 1.0
     ) -> tuple:
         """
         Détermine si le fallback Qwen est nécessaire.
@@ -161,5 +162,8 @@ Texte extrait :"""
 
         if ocr_confidence < self.CONFIDENCE_THRESHOLD:
             return True, f"Confiance OCR insuffisante ({ocr_confidence} < {self.CONFIDENCE_THRESHOLD})"
+
+        if linguistic_score < 0.5:
+            return True, f"Texte linguistiquement suspect ({linguistic_score} < 0.5)"
 
         return False, None

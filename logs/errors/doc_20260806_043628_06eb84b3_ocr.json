@@ -1,0 +1,7 @@
+{
+  "step": "ocr",
+  "timestamp": "2026-08-06T04:40:00.471987",
+  "error": "LLMFallback.should_fallback() got an unexpected keyword argument 'linguistic_score'",
+  "correction_applied": null,
+  "duration_before_fail": 2.343
+}
