@@ -46,6 +46,57 @@ TIMEOUT = 600
 FUZZY_DEDUP_THRESHOLD = 0.85
 
 # ============================================================
+# FILTRE DE NÉGATION — post-traitement déterministe
+# Qwen (3B) a tendance à recopier des mentions de négation
+# ("RAS", "sans particularité"...) comme si c'était une vraie
+# entité positive, malgré la consigne du prompt. On filtre ça
+# après coup plutôt que de compter sur le modèle pour respecter
+# la règle "liste vide si rien à signaler" — plus fiable et
+# indépendant de la capacité du modèle utilisé.
+# ============================================================
+NEGATION_TERMS = {
+    "ras", "rien a signaler", "rien à signaler",
+    "nad", "non applicable",
+    "sans particularite", "sans particularité",
+    "neant", "néant",
+    "aucun", "aucune",
+    "sans antecedent", "sans antécédent",
+    "sans antecedents", "sans antécédents",
+    "sans antecedent notable", "sans antécédent notable",
+    "sans antecedents notables", "sans antécédents notables",
+    "pas d'antecedent", "pas d'antécédent",
+    "pas d'antecedents", "pas d'antécédents",
+    "non contributif", "non contributive",
+    "sans particularites", "sans particularités",
+    "negatif", "négatif", "negative", "négative",
+    "non",
+}
+
+# ============================================================
+# VALIDATION DES DATES — post-traitement, catégorie
+# "dates_importantes" uniquement.
+# Qwen a tendance à y glisser du texte qui n'est pas une date
+# (formules de politesse, instructions de soin, durées...).
+# On ne RE-extrait rien : on vérifie juste que l'entité déjà
+# sortie par Qwen contient bel et bien une date reconnaissable,
+# avec un contrôle de plausibilité (jour 1-31, mois 1-12) pour
+# écarter les dates corrompues par l'OCR (ex: "23/C5/2008").
+# ============================================================
+MONTHS_FR = (
+    r'janvier|f[ée]vrier|mars|avril|mai|juin|juillet|'
+    r'ao[uû]t|septembre|octobre|novembre|d[ée]cembre'
+)
+
+DATE_VALIDATION_PATTERNS = [
+    # JJ/MM/AAAA, JJ-MM-AAAA, JJ.MM.AAAA (jour/mois avec vérif plausibilité)
+    re.compile(r'\b(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{2,4})\b'),
+    # "12 juin 1996", "1er octobre 2009"
+    re.compile(rf'\b\d{{1,2}}(?:er)?\s+(?:{MONTHS_FR})\s+\d{{4}}\b', re.IGNORECASE),
+    # "octobre 2009" (mois + année sans jour)
+    re.compile(rf'\b(?:{MONTHS_FR})\s+\d{{4}}\b', re.IGNORECASE),
+]
+
+# ============================================================
 # SCHÉMA DE SORTIE — conserve exactement les clés de la v1
 # (pathologies_actives, antecedents_medicaux, etc.) pour ne
 # rien casser en aval (vsm_generator.py, test_pipeline.py)
@@ -78,6 +129,13 @@ RÈGLES :
    souvent à PLUSIEURS endroits différents du document (date de prescription, date
    d'enregistrement, date de l'acte...) — il faut TOUTES les extraire, pas seulement la
    première trouvée.
+5. Chaque entité va dans UNE SEULE catégorie, la plus précise possible :
+   - un événement déjà opéré va dans antecedents_chirurgicaux, pas dans antecedents_medicaux
+   - un événement médical déjà survenu (pathologie passée ou active) ne va PAS dans
+     facteurs_risque (les facteurs de risque sont des éléments de mode de vie/hérédité,
+     pas des diagnostics déjà posés)
+   - une valeur biologique chiffrée (ex: "Hémoglobine 13,4 g/dl") va dans
+     constantes_biologiques, pas dans examens_bilans
 
 EXEMPLE :
 
@@ -259,8 +317,174 @@ class NERExtractor:
             value = parsed.get(key, [])
             if not isinstance(value, list):
                 value = []
-            clean[key] = [str(v).strip() for v in value if str(v).strip()]
+            entries = [str(v).strip() for v in value if str(v).strip()]
+            entries = [e for e in entries if not self._is_negation(e)]
+
+            if key == "dates_importantes":
+                entries = [e for e in entries if self._contains_valid_date(e)]
+
+            clean[key] = entries
+
+        clean = self._resolve_allergy_conflicts(clean)
+        clean = self._resolve_category_priority(clean)
         return clean
+
+    def _is_negation(self, value: str) -> bool:
+        """
+        Détecte si une entité extraite n'est en fait qu'une mention de
+        négation ("RAS", "sans particularité"...) et non une vraie donnée
+        clinique. Normalisation : minuscules, accents simplifiés, ponctuation
+        de bord retirée. Comparaison stricte sur la chaîne entière (pas de
+        sous-chaîne) pour ne jamais filtrer une entité légitime qui
+        contiendrait incidemment un de ces mots (ex: "Non fumeuse depuis 2020"
+        ne doit pas être filtré, seul un "Non" isolé doit l'être).
+        """
+        normalized = value.lower().strip().strip(".:-").strip()
+        normalized = (normalized
+                      .replace('é', 'e').replace('è', 'e').replace('ê', 'e')
+                      .replace('à', 'a').replace('ù', 'u'))
+        return normalized in NEGATION_TERMS
+
+    def _contains_valid_date(self, value: str) -> bool:
+        """
+        Vérifie que l'entité contient une date plausible. Pour le format
+        numérique JJ/MM/AAAA, on valide en plus que jour et mois sont dans
+        des plages réalistes — ça permet d'écarter les dates corrompues par
+        l'OCR (ex: "23/C5/2008" ne matche déjà pas le pattern car 'C5' n'est
+        pas numérique ; "32/13/2020" matcherait le pattern mais serait rejeté
+        ici car jour/mois hors plage).
+        """
+        for pattern in DATE_VALIDATION_PATTERNS:
+            for match in pattern.finditer(value):
+                groups = match.groups()
+                if len(groups) == 3:  # format numérique JJ/MM/AAAA
+                    day, month, _year = groups
+                    if 1 <= int(day) <= 31 and 1 <= int(month) <= 12:
+                        return True
+                    continue  # ce match précis est invalide, on essaie la suite
+                else:
+                    return True  # format textuel (mois nommé) : déjà fiable
+        return False
+
+    def _resolve_allergy_conflicts(self, result: dict) -> dict:
+        """
+        Contrôle de cohérence critique pour la sécurité du patient : si une
+        entité apparaît à la fois dans "allergies_intolerances" et
+        "traitements_en_cours", c'est très probablement une confusion du
+        modèle (il a classé un médicament pris par la patiente comme une
+        allergie), pas une vraie coïncidence. On retire l'entité des
+        allergies dans ce cas — un traitement en cours mal classé est un
+        moindre mal comparé à une fausse allergie affichée dans un VSM.
+        """
+        treatments = result.get("traitements_en_cours", [])
+        allergies = result.get("allergies_intolerances", [])
+
+        kept_allergies = []
+        for allergy in allergies:
+            allergy_norm = allergy.lower().strip()
+            conflict = False
+            for treatment in treatments:
+                treatment_norm = treatment.lower().strip()
+                similarity = SequenceMatcher(None, allergy_norm, treatment_norm).ratio()
+                is_substring = (
+                    len(allergy_norm) >= 4
+                    and (allergy_norm in treatment_norm or treatment_norm in allergy_norm)
+                )
+                if similarity >= FUZZY_DEDUP_THRESHOLD or is_substring:
+                    conflict = True
+                    logger.warning(
+                        f"Conflit allergie/traitement détecté et résolu : "
+                        f"\"{allergy}\" retiré des allergies (présent aussi dans "
+                        f"les traitements en cours : \"{treatment}\")."
+                    )
+                    break
+            if not conflict:
+                kept_allergies.append(allergy)
+
+        result["allergies_intolerances"] = kept_allergies
+        return result
+
+    def _remove_matches(self, source_list: list, reference_lists: list,
+                         reason: str) -> list:
+        """
+        Fonction générique : retire de source_list toute entité qui
+        fuzzy-matche une entité déjà présente dans l'une des reference_lists.
+        Utilisée pour appliquer une hiérarchie de priorité entre catégories
+        qui se chevauchent sémantiquement.
+        """
+        kept = []
+        for item in source_list:
+            item_norm = item.lower().strip()
+            matched_ref = None
+
+            for ref_list in reference_lists:
+                for ref in ref_list:
+                    ref_norm = ref.lower().strip()
+                    similarity = SequenceMatcher(None, item_norm, ref_norm).ratio()
+                    is_substring = (
+                        len(item_norm) >= 6 and len(ref_norm) >= 6
+                        and (item_norm in ref_norm or ref_norm in item_norm)
+                    )
+                    if similarity >= FUZZY_DEDUP_THRESHOLD or is_substring:
+                        matched_ref = ref
+                        break
+                if matched_ref:
+                    break
+
+            if matched_ref:
+                logger.info(f"{reason} : \"{item}\" retiré (déjà présent sous "
+                            f"forme \"{matched_ref}\" dans une catégorie prioritaire).")
+            else:
+                kept.append(item)
+
+        return kept
+
+    def _resolve_category_priority(self, result: dict) -> dict:
+        """
+        Résout les chevauchements entre catégories qui se recoupent
+        sémantiquement, en appliquant une hiérarchie de priorité (la
+        catégorie la plus spécifique/structurée gagne, l'entité est retirée
+        de la catégorie la moins spécifique). Constaté sur documents réels :
+        une même entité ("Pneumothorax", une valeur d'hémoglobine...) peut
+        se retrouver dupliquée dans plusieurs catégories après fusion de
+        toutes les pages d'un dossier.
+
+        Règles appliquées :
+        1. Antécédent chirurgical > antécédent médical
+           (le chirurgical est une information plus précise)
+        2. Pathologie active / antécédent (médical ou chirurgical)
+           > facteur de risque
+           (un événement déjà survenu n'est plus juste un "risque" théorique)
+        3. Constante biologique > examen/bilan
+           (une valeur numérique structurée est plus utile qu'une mention
+           générique dans la liste des examens)
+        """
+        # Règle 1 : chirurgical prioritaire sur médical générique
+        result["antecedents_medicaux"] = self._remove_matches(
+            result.get("antecedents_medicaux", []),
+            [result.get("antecedents_chirurgicaux", [])],
+            reason="Priorité chirurgical > médical",
+        )
+
+        # Règle 2 : pathologie/antécédent déjà survenu prioritaire sur facteur de risque
+        result["facteurs_risque"] = self._remove_matches(
+            result.get("facteurs_risque", []),
+            [
+                result.get("pathologies_actives", []),
+                result.get("antecedents_medicaux", []),
+                result.get("antecedents_chirurgicaux", []),
+            ],
+            reason="Priorité pathologie/antécédent > facteur de risque",
+        )
+
+        # Règle 3 : constante biologique structurée prioritaire sur mention d'examen générique
+        result["examens_bilans"] = self._remove_matches(
+            result.get("examens_bilans", []),
+            [result.get("constantes_biologiques", [])],
+            reason="Priorité constante biologique > examen générique",
+        )
+
+        return result
 
     # ------------------------------------------------------------------
     # Extraction sur un DOCUMENT entier (toutes les pages) + fusion
@@ -304,6 +528,12 @@ class NERExtractor:
             for key in OUTPUT_SCHEMA_KEYS:
                 for value in page_result.get(key, []):
                     self._add_with_dedup(merged[key], value)
+
+        # Re-applique le contrôle allergie/traitement au niveau document :
+        # un conflit peut n'apparaître qu'après fusion (allergie mentionnée
+        # page 5, même médicament en traitement page 80, par ex.).
+        merged = self._resolve_allergy_conflicts(merged)
+        merged = self._resolve_category_priority(merged)
 
         return merged
 
@@ -352,7 +582,11 @@ if __name__ == "__main__":
     extractor = NERExtractor()
 
     sample_text = """
-    0780 POLE GYNECOLOGIE OBSTETRIQUE, MEDECINE FCETALE, REPRODUCTION ET GENETIQUE GyNecoLogiE OnsteTRiQuE A > Gynecologie hospitalisation, Consultations externes et echographies, Bloc operatoire, Orthogenie (Centre IVG, planification familiale) Centre d'Accueil des Victimes Presumees d'Abus Sexuels GynecoLogIE OsstetriQue B > Obstetrique hospitalisation, Salle de Naissances, Urgences, Grossesses pathologiques, Medecine Fcetale MEDEcINE ET BIoLOGIE DE LA RepRoDucTION > Consultations CECOS FIV, Hospitalisations de jOur, laboratoire GENETiQue>Consultations, Laboratoires, Fcetopathologie Gynecologie-Obstetrique A Courrier adresse a:Dr Copiea:-Dr le 29 avril 2011 No Dossier: COMPTE-RENDU DE CONSULTATION Chere Je t'adresse comme convenu Madame BANANE Sophie nee le 17/09/1962, pour la prise en charge de dysurie.. Dans ses antecedents on note : Sur le plan familial, RAS Sur le plan chirurgical, Fracture cubitale. Cholecystectomie. Sur le plan medical, Pneumothorax. Sur le plan obstetrical, Une naissance par les voies naturelles. Sur le plan gynecologique,. Ses frottis, mammographies, echographies sont a jour. Cette patiente est menopausee.. L'histoire de la maladie commence en 2008 au traitement chirurgical d'un kyste uretral par les voies naturelles. A la suite de cette intervention, des douleurssupportables ont necessite un traitement par Rivotril et la patiente a vu apparaitre des fuites urinaires apres chaque miction, en quantite selon elle assez importante, necessitant la mise en place d'un protege slip en permanence.
+    Patient : Jean DUPONT, né le 12/03/1965
+    Antécédents : HTA, diabète type 2 depuis 2010
+    Allergies : pénicilline
+    Traitement actuel : Metformine 1000mg 2x/jour, Amlodipine 5mg 1x/jour
+    Consultation du 15/06/2026 pour renouvellement ordonnance.
     """
 
     result = extractor.extract(sample_text, document_type="ordonnance")
