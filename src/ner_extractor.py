@@ -97,6 +97,27 @@ DATE_VALIDATION_PATTERNS = [
 ]
 
 # ============================================================
+# VALIDATION DES ALERTES — post-traitement, catégorie
+# "points_attention" uniquement.
+# Constat (test sur échantillon réel) : malgré la consigne du prompt
+# ("uniquement si explicitement signalé comme alerte"), Qwen y range
+# parfois des conclusions banales/rassurantes ("Frottis non
+# inflammatoire, absence de cellule suspecte") ou des descriptions
+# cliniques ordinaires. On n'accepte une entrée que si elle contient
+# un vrai marqueur de mise en garde — même logique que la validation
+# des dates : on ne fait pas confiance au modèle seul sur un champ
+# aussi sensible.
+# ============================================================
+ALERT_MARKERS = [
+    "attention", "contre-indication", "contre indication",
+    "formel", "formelle", "formellement",
+    "ne jamais", "jamais administrer", "a ne jamais",
+    "urgent", "urgence", "danger", "dangereux", "dangereuse",
+    "alerte", "a ne pas", "interdit", "interdite", "proscrit", "proscrite",
+    "precaution", "vigilance", "risque vital", "mise en garde",
+]
+
+# ============================================================
 # SCHÉMA DE SORTIE — conserve exactement les clés de la v1
 # (pathologies_actives, antecedents_medicaux, etc.) pour ne
 # rien casser en aval (vsm_generator.py, test_pipeline.py)
@@ -105,12 +126,14 @@ OUTPUT_SCHEMA_KEYS = [
     "pathologies_actives",
     "antecedents_medicaux",
     "antecedents_chirurgicaux",
+    "antecedents_familiaux",
     "allergies_intolerances",
     "traitements_en_cours",
     "constantes_biologiques",
     "vaccinations",
     "facteurs_risque",
     "examens_bilans",
+    "points_attention",
     "dates_importantes",
 ]
 
@@ -131,11 +154,18 @@ RÈGLES :
    première trouvée.
 5. Chaque entité va dans UNE SEULE catégorie, la plus précise possible :
    - un événement déjà opéré va dans antecedents_chirurgicaux, pas dans antecedents_medicaux
+   - un antécédent qui concerne un membre de la famille (père, mère, frère/sœur...) va dans
+     antecedents_familiaux, JAMAIS dans antecedents_medicaux (qui est réservé aux antécédents
+     personnels du patient)
    - un événement médical déjà survenu (pathologie passée ou active) ne va PAS dans
      facteurs_risque (les facteurs de risque sont des éléments de mode de vie/hérédité,
      pas des diagnostics déjà posés)
    - une valeur biologique chiffrée (ex: "Hémoglobine 13,4 g/dl") va dans
      constantes_biologiques, pas dans examens_bilans
+6. points_attention : uniquement les alertes ou consignes urgentes EXPLICITEMENT signalées
+   comme telles dans le texte (ex: "ATTENTION", "contre-indication formelle", "à ne jamais
+   administrer", consigne de sécurité mise en avant). Ne mets rien ici par défaut — la
+   plupart des documents n'en contiennent pas, retourne une liste vide dans ce cas.
 
 EXEMPLE :
 
@@ -149,12 +179,14 @@ Réponse attendue :
   "pathologies_actives": ["Ménopause subatrophique"],
   "antecedents_medicaux": [],
   "antecedents_chirurgicaux": [],
+  "antecedents_familiaux": [],
   "allergies_intolerances": [],
   "traitements_en_cours": [],
   "constantes_biologiques": [],
   "vaccinations": [],
   "facteurs_risque": [],
   "examens_bilans": ["Frottis de dépistage cervico-vaginal : satisfaisant, non inflammatoire, absence de cellule suspecte"],
+  "points_attention": [],
   "dates_importantes": ["Prescrit le 09/10/2014", "Enregistré le 10/10/2014"]
 }
 
@@ -168,12 +200,14 @@ Réponds STRICTEMENT en JSON valide, sans texte avant ou après, selon ce schém
   "pathologies_actives": ["string", ...],
   "antecedents_medicaux": ["string", ...],
   "antecedents_chirurgicaux": ["string", ...],
+  "antecedents_familiaux": ["string", ...],
   "allergies_intolerances": ["string", ...],
   "traitements_en_cours": ["string", ...],
   "constantes_biologiques": ["string", ...],
   "vaccinations": ["string", ...],
   "facteurs_risque": ["string", ...],
   "examens_bilans": ["string", ...],
+  "points_attention": ["string", ...],
   "dates_importantes": ["string", ...]
 }
 """
@@ -213,6 +247,75 @@ class NERExtractor:
         return text.strip()
 
     # ------------------------------------------------------------------
+    # Identité patient — extraction déterministe par regex, PAS par Qwen.
+    # Contrairement aux entités cliniques (langage trop variable pour du
+    # regex), le nom et la date de naissance suivent des formats très
+    # stables ("Mme/M. NOM Prénom", "né(e) le JJ/MM/AAAA"). Un LLM sur ce
+    # type de donnée n'apporte rien et ajoute un risque d'erreur sur
+    # l'information la plus critique du VSM — on reste 100% déterministe.
+    # ------------------------------------------------------------------
+    def extract_patient_identity(self, text: str) -> dict:
+        """
+        Retourne {"nom_complet": str|None, "date_naissance": str|None,
+        "medecin_traitant": str|None} à partir du texte d'UNE page.
+        Champs à None si non trouvés — on ne devine jamais.
+        """
+        identity = {"nom_complet": None, "date_naissance": None, "medecin_traitant": None}
+
+        # Nom : civilité (Mme/M./Madame/Monsieur) suivie du nom (majuscules)
+        # puis du prénom (1 mot capitalisé max, pour éviter de capturer le
+        # mot suivant dans la phrase si le texte OCR n'a pas de ponctuation
+        # claire — ex: "Mme BANANE Sophie Prescrit le..." sans virgule).
+        name_match = re.search(
+            r'\b(?:Mme|M\.|Madame|Monsieur)\s+'
+            r'([A-ZÀ-Ÿ][A-ZÀ-Ÿ\-]{1,}(?:\s+[A-ZÀ-Ÿ][a-zà-ÿ\-]+){0,1})',
+            text
+        )
+        if name_match:
+            identity["nom_complet"] = name_match.group(1).strip()
+
+        # Date de naissance : "né(e) le JJ/MM/AAAA" ou "date de naissance : ..."
+        dob_match = re.search(
+            r"(?:n[ée]\(?e?\)?\s+le|date\s+de\s+naissance\s*[:\-]?)\s*"
+            r"(\d{1,2}[/\-.]\d{1,2}[/\-.]\d{2,4})",
+            text, re.IGNORECASE
+        )
+        if dob_match:
+            day, month, year = re.split(r'[/\-.]', dob_match.group(1))
+            if 1 <= int(day) <= 31 and 1 <= int(month) <= 12:
+                identity["date_naissance"] = dob_match.group(1)
+
+        # Médecin traitant déclaré — rarement explicite dans un dossier
+        # scanné classique (c'est une notion administrative du DMP), on le
+        # cherche quand même au cas où, sans jamais forcer une valeur.
+        gp_match = re.search(
+            r'm[ée]decin\s+traitant\s*(?:d[ée]clar[ée])?\s*[:\-]?\s*'
+            r'(Dr\.?\s*[A-ZÀ-Ÿ][a-zà-ÿA-ZÀ-Ÿ\-]+)',
+            text, re.IGNORECASE
+        )
+        if gp_match:
+            identity["medecin_traitant"] = gp_match.group(1).strip()
+
+        return identity
+
+    def merge_patient_identity(self, per_page_identities: list[dict]) -> dict:
+        """
+        Fusionne l'identité détectée sur plusieurs pages. Pour chaque champ,
+        on garde la valeur la plus fréquente parmi les pages où elle a été
+        trouvée (vote majoritaire) — ça absorbe les erreurs OCR ponctuelles
+        sur une page isolée (ex: date corrompue "Z3[o6]88" sur une page,
+        correcte ailleurs).
+        """
+        from collections import Counter
+
+        merged = {}
+        for field in ("nom_complet", "date_naissance", "medecin_traitant"):
+            values = [p[field] for p in per_page_identities if p.get(field)]
+            merged[field] = Counter(values).most_common(1)[0][0] if values else None
+
+        return merged
+
+    # ------------------------------------------------------------------
     # Point d'entrée principal — UNE page / UN texte
     # (signature conservée : extract(text, document_type))
     # ------------------------------------------------------------------
@@ -226,12 +329,16 @@ class NERExtractor:
         result = {key: entities.get(key, []) for key in OUTPUT_SCHEMA_KEYS}
         result["document_type"] = document_type
         result["extraction_method"] = "qwen_only"
+        # Identité patient : extraction déterministe (regex), indépendante
+        # de Qwen — voir extract_patient_identity() pour la justification.
+        result["identite_patient"] = self.extract_patient_identity(text)
         return result
 
     def _empty_result(self, reason: str) -> dict:
         result = {key: [] for key in OUTPUT_SCHEMA_KEYS}
         result["document_type"] = "inconnu"
         result["extraction_method"] = "none"
+        result["identite_patient"] = {"nom_complet": None, "date_naissance": None, "medecin_traitant": None}
         result["reason"] = reason
         return result
 
@@ -323,9 +430,20 @@ class NERExtractor:
             if key == "dates_importantes":
                 entries = [e for e in entries if self._contains_valid_date(e)]
 
+            if key == "points_attention":
+                # 1. Marqueur d'alerte requis (déjà en place)
+                entries = [e for e in entries if self._contains_alert_marker(e)]
+                # 2. Plafond de longueur : une vraie alerte clinique est une
+                # consigne courte. Un bloc de 150+ mots (ex: un courrier
+                # syndical scanné par erreur qui contient le mot "Attention")
+                # n'est jamais une alerte légitime — c'est du bruit qui a
+                # échappé au filtre de marqueur.
+                entries = [e for e in entries if len(e) <= 200]
+
             clean[key] = entries
 
         clean = self._resolve_allergy_conflicts(clean)
+        clean = self._resolve_attention_conflicts(clean)
         clean = self._resolve_category_priority(clean)
         return clean
 
@@ -366,6 +484,23 @@ class NERExtractor:
                     return True  # format textuel (mois nommé) : déjà fiable
         return False
 
+    def _contains_alert_marker(self, value: str) -> bool:
+        """
+        Vérifie qu'une entité de "points_attention" contient un vrai
+        marqueur de mise en garde. Sans ce filtre, Qwen y range parfois des
+        conclusions banales ("frottis non inflammatoire, absence de cellule
+        suspecte") qui ne sont pas des alertes — juste des phrases jugées
+        "notables" par le modèle. Normalisation : minuscules + accents
+        simplifiés, comparaison par sous-chaîne (contrairement à
+        _is_negation, ici on VEUT détecter la présence du marqueur n'importe
+        où dans la phrase, pas juste en tant que chaîne entière).
+        """
+        normalized = value.lower()
+        normalized = (normalized
+                      .replace('é', 'e').replace('è', 'e').replace('ê', 'e')
+                      .replace('à', 'a').replace('ù', 'u'))
+        return any(marker in normalized for marker in ALERT_MARKERS)
+
     def _resolve_allergy_conflicts(self, result: dict) -> dict:
         """
         Contrôle de cohérence critique pour la sécurité du patient : si une
@@ -402,6 +537,56 @@ class NERExtractor:
                 kept_allergies.append(allergy)
 
         result["allergies_intolerances"] = kept_allergies
+        return result
+
+    def _leading_word(self, text: str) -> str:
+        """Premier mot alphabétique d'une chaîne (utile pour repérer un nom
+        de médicament en tête d'une entrée)."""
+        words = re.findall(r"[A-Za-zÀ-ÿ]+", text)
+        return words[0].lower() if words else ""
+
+    def _resolve_attention_conflicts(self, result: dict) -> dict:
+        """
+        Contrôle de cohérence : constaté sur un vrai run, "Rivotril :
+        ATTENTION à ne jamais administrer" dans points_attention, alors que
+        "RIVOTRIL 20 gouttes le soir" est dans traitements_en_cours au même
+        moment — contradiction dangereuse.
+
+        Contrairement au cas allergie/traitement (mutuellement exclusifs par
+        définition), ici on garde le traitement et on retire seulement
+        l'alerte : un médicament qui revient plusieurs fois dans le dossier
+        avec un dosage cohérent est un signal plus fiable qu'une mise en
+        garde isolée, sans justification (pas de "suite à une allergie",
+        "suite à un effet indésirable"...) qu'on ne retrouve nulle part
+        ailleurs dans le document. On logue quand même l'avertissement, pour
+        qu'une vraie contre-indication documentée reste visible en révision
+        manuelle si jamais ce choix s'avère faux sur un autre dossier.
+        """
+        treatments = result.get("traitements_en_cours", [])
+        attentions = result.get("points_attention", [])
+
+        treatment_names = [self._leading_word(t) for t in treatments]
+        kept_attentions = []
+
+        for attention in attentions:
+            attention_name = self._leading_word(attention.split(':')[0])
+            has_conflict = (
+                attention_name and len(attention_name) >= 4
+                and attention_name in treatment_names
+            )
+
+            if has_conflict:
+                logger.warning(
+                    f"Contradiction détectée entre points_attention et "
+                    f"traitements_en_cours pour le médicament \"{attention_name}\" : "
+                    f"\"{attention}\" retiré des alertes (le traitement en cours, "
+                    f"plus souvent répété dans le dossier, est jugé plus fiable). "
+                    f"Révision manuelle recommandée sur ce point."
+                )
+            else:
+                kept_attentions.append(attention)
+
+        result["points_attention"] = kept_attentions
         return result
 
     def _remove_matches(self, source_list: list, reference_lists: list,
@@ -513,6 +698,9 @@ class NERExtractor:
         merged = self.merge_entities(per_page_results)
         merged["document_type"] = document_type
         merged["extraction_method"] = "qwen_only"
+        merged["identite_patient"] = self.merge_patient_identity(
+            [p["identite_patient"] for p in per_page_results]
+        )
         return merged
 
     # ------------------------------------------------------------------
@@ -533,6 +721,7 @@ class NERExtractor:
         # un conflit peut n'apparaître qu'après fusion (allergie mentionnée
         # page 5, même médicament en traitement page 80, par ex.).
         merged = self._resolve_allergy_conflicts(merged)
+        merged = self._resolve_attention_conflicts(merged)
         merged = self._resolve_category_priority(merged)
 
         return merged

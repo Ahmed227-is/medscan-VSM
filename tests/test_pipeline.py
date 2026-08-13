@@ -178,6 +178,10 @@ def test_pipeline(file_path: str):
                 print(f"    ✓ Vaccinations     : {ner_result['vaccinations']}")
                 print(f"    ✓ Examens          : {ner_result['examens_bilans']}")
                 print(f"    ✓ Dates            : {ner_result['dates_importantes']}")
+                print(f"    ✓ Antéc. familiaux : {ner_result['antecedents_familiaux']}")
+                print(f"    ✓ Points attention : {ner_result['points_attention']}")
+                if ner_result['identite_patient']['nom_complet']:
+                    print(f"    ✓ Identité détectée : {ner_result['identite_patient']}")
             except Exception as e:
                 tracker.fail_step("ner", str(e))
                 raise
@@ -212,6 +216,12 @@ def test_pipeline(file_path: str):
         # détaillée (ex: "Metformine 1000mg" -> "Metformine 1000mg matin et soir").
         merged_ner = ner.merge_entities([p['ner'] for p in pages_results])
 
+        # Identité patient : fusion séparée (regex + vote majoritaire),
+        # merge_entities() ne traite que les catégories cliniques (listes).
+        merged_identity = ner.merge_patient_identity(
+            [p['ner']['identite_patient'] for p in pages_results]
+        )
+
         # Statistiques globales
         ocr_methods = [p['ocr_method'] for p in pages_results]
         zeroshot_used = sum(
@@ -237,6 +247,7 @@ def test_pipeline(file_path: str):
                 )
             },
             "ner_global": merged_ner,
+            "identite_patient": merged_identity,
             "pages": pages_results,
             "full_text": full_document_text,
             "tracking": tracker.get_summary()
@@ -251,6 +262,9 @@ def test_pipeline(file_path: str):
         print(f"\n{'=' * 60}")
         print(f"RÉSUMÉ FINAL")
         print(f"{'=' * 60}")
+        print(f"✓ Identité patient        : {merged_identity['nom_complet']}")
+        print(f"✓ Date de naissance       : {merged_identity['date_naissance']}")
+        print(f"✓ Médecin traitant        : {merged_identity['medecin_traitant']}")
         print(f"✓ Type dominant           : {dominant_type}")
         print(f"✓ Pages PaddleOCR         : {final_result['stats']['pages_paddleocr']}")
         print(f"✓ Pages Qwen fallback     : {final_result['stats']['pages_qwen']}")
