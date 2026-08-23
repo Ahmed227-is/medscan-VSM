@@ -1,27 +1,54 @@
 """
 ner_extractor.py — MedScan VSM
-Module d'extraction d'entités médicales NER, conforme au référentiel VSM HAS / CI-SIS.
+Module d'extraction d'entités médicales NER, conforme au référentiel VSM
+HAS/CI-SIS IPS-FR_2024.01 (Volet Synthèse médicale, ANS, 13/10/2025).
 
 HISTORIQUE DE CONCEPTION (pour le dossier technique / soutenance) :
-    - v1 : approche hybride regex + DrBERT-4GB-CP-CamemBERT
-    - Constat sur documents réels (BANANE_Sophie.pdf, etc.) :
-        · Le regex, même exhaustif, ne capture pas la variabilité du langage
-          médical réel (formulations libres, abréviations non standard,
-          erreurs OCR sur manuscrits) → beaucoup de faux négatifs.
-        · DrBERT-4GB-CP-CamemBERT est incompatible avec transformers==5.9.0
-          (erreur de tokenizer), et les alternatives testées (DoctoBERT,
-          HealthcareNER-Fr) ne sont pas exploitables (non fine-tuné / gated).
-    - v2 (ce fichier) : extraction 100% via Qwen2.5-VL en mode TEXTE (pas
-      vision) sur le texte déjà extrait par ocr_engine.py / llm_fallback.py.
-      Un LLM généraliste bien prompté gère mieux le langage médical libre
-      qu'un pipeline regex, et Qwen est déjà intégré/testé dans le projet
-      (fallback OCR), donc aucune nouvelle dépendance.
+    - v1 : approche hybride regex + DrBERT-4GB-CP-CamemBERT — abandonnée
+      (regex trop rigide, DrBERT incompatible transformers==5.9.0).
+    - v2 : extraction 100% Qwen2.5-VL texte, schéma "listes plates de
+      strings" par catégorie, 9 corrections post-traitement (négation,
+      dates, conflits allergie/traitement, priorité inter-catégories...).
+    - v3 (ce fichier) : recoupement avec le document officiel IPS-FR_2024.01
+      a révélé que le VSM HAS attend, pour la plupart des sections, des
+      OBJETS structurés {texte, date} et non de simples chaînes — la date
+      de début est un champ obligatoire [1..1] pour Problèmes actifs,
+      Antécédents, Historique des actes, Allergies. Le "bandeau
+      d'horodatage global" ajouté en v2.5 (vsm_generator.py) ne
+      répondait pas à cette exigence — il masquait le problème plutôt
+      que de le résoudre. v3 corrige ça à la racine : Qwen produit
+      directement des objets {texte, date}, catégorie par catégorie.
 
-INTERFACE CONSERVÉE (compatibilité avec le reste du pipeline) :
-    - NERExtractor().extract(text, document_type="inconnu") -> dict
-      (même signature et mêmes clés de sortie que la v1 regex+DrBERT)
-    - Nouveau : NERExtractor().extract_document(pages, document_type, tracker)
-      pour traiter un document multi-pages avec fusion/dédoublonnage.
+      Nouvelles sections ajoutées (obligatoires HAS absentes en v2) :
+      historique_actes (remplace antecedents_chirurgicaux), dispositifs_medicaux,
+      effets_indesirables_medicaments (distinct des allergies).
+      constantes_biologiques éclatée en "constantes" (signes vitaux :
+      poids, taille, TA, FC...) et "examens_bilans" (résultats de biologie/
+      imagerie, qui restent des mentions non structurées par choix — voir
+      note de scope ci-dessous).
+
+    SCOPE ASSUMÉ (validé avec le porteur de projet) : on vise la
+    conformité au CONTENU métier du VSM (bonnes rubriques, bon contenu,
+    date rattachée à l'entité), PAS la conformité technique complète
+    CDA R2/XML avec codage CIM-10/SNOMED/LOINC et OID des jeux de valeurs
+    officiels — hors de portée réaliste pour un prototype, et non
+    nécessaire à l'évaluation du concours (cf. règlement Art. 5 : "VSM
+    conforme au référentiel de la HAS", sans exigence d'interopérabilité
+    technique CDA explicite).
+
+    RISQUE CONNU ET ASSUMÉ : le schéma de sortie demandé à Qwen est
+    nettement plus riche qu'en v2 (14 catégories, dont 8 avec objets
+    structurés). On a déjà observé qu'un modèle 3B suit moins bien les
+    consignes à mesure que le prompt se complexifie. Les garde-fous
+    post-traitement (négation, dates, priorités, conflits) restent tous
+    actifs et indépendants de la qualité de suivi de consigne de Qwen —
+    mais un audit qualité sur données réelles reste nécessaire après ce
+    changement, avant de considérer le module comme stable.
+
+INTERFACE : NERExtractor().extract(text, document_type) -> dict
+            NERExtractor().extract_document(pages, document_type, tracker) -> dict
+            NERExtractor().merge_entities(per_page_results) -> dict
+            NERExtractor().extract_patient_identity(text) -> dict (regex, pas Qwen)
 """
 
 import json
@@ -29,30 +56,65 @@ import re
 import logging
 import requests
 from difflib import SequenceMatcher
+from collections import Counter
 from typing import Optional
 
 logger = logging.getLogger("ner_extractor")
 
 # ============================================================
-# CONFIG OLLAMA — cohérent avec llm_fallback.py
+# CONFIG OLLAMA
 # ============================================================
 OLLAMA_URL = "http://localhost:11434/api/chat"
 MODEL_NAME = "qwen2.5vl:3b"
-NUM_CTX_MIN = 1024      # plancher : jamais en dessous, même pour un texte très court
-NUM_CTX_MAX = 8192      # plafond : jamais au-dessus, pour rester sûr sur 16GB RAM / iGPU
+NUM_CTX_MIN = 1024
+NUM_CTX_MAX = 8192
 TIMEOUT = 600
 
-# Seuil de similarité pour le dédoublonnage fuzzy (0-1)
 FUZZY_DEDUP_THRESHOLD = 0.85
 
+# Température : basse (fidélité) sur la 1ère tentative, plus élevée
+# (diversité) sur la nouvelle tentative en cas d'échec de parsing —
+# voir _request_qwen pour la justification.
+BASE_TEMPERATURE = 0.1
+RETRY_TEMPERATURE = 0.4
+
 # ============================================================
-# FILTRE DE NÉGATION — post-traitement déterministe
-# Qwen (3B) a tendance à recopier des mentions de négation
-# ("RAS", "sans particularité"...) comme si c'était une vraie
-# entité positive, malgré la consigne du prompt. On filtre ça
-# après coup plutôt que de compter sur le modèle pour respecter
-# la règle "liste vide si rien à signaler" — plus fiable et
-# indépendant de la capacité du modèle utilisé.
+# SCHÉMA DE SORTIE v3 — conforme IPS-FR_2024.01
+#
+# OBJECT_CATEGORIES : chaque entrée est un dict avec un champ texte
+# + un champ date. STRING_CATEGORIES : chaque entrée reste une simple
+# chaîne (sections où le référentiel HAS ne rend pas la date
+# structurante, ou trop complexe à fiabiliser pour peu de valeur
+# ajoutée à ce stade).
+# ============================================================
+OBJECT_CATEGORIES = {
+    "pathologies_actives": "date_debut",
+    "antecedents_medicaux": "date_debut",
+    "antecedents_familiaux": "date_debut",
+    "historique_actes": "date",
+    "allergies_intolerances": "date_debut",
+    "effets_indesirables_medicaments": "date_debut",
+    "traitements_en_cours": "date_debut",
+}
+
+STRING_CATEGORIES = [
+    "dispositifs_medicaux",
+    "points_attention",
+    "vaccinations",
+    "facteurs_risque",
+    "examens_bilans",
+    "dates_importantes",
+]
+
+# "constantes" est un cas particulier d'objet (signe_vital + valeur + date)
+CONSTANTES_KEY = "constantes"
+
+OUTPUT_SCHEMA_KEYS = list(OBJECT_CATEGORIES.keys()) + [CONSTANTES_KEY] + STRING_CATEGORIES
+
+TRAITEMENT_TYPES_VALIDES = {"long_cours", "aigu"}
+
+# ============================================================
+# FILTRE DE NÉGATION — inchangé (v2), s'applique au champ "texte"
 # ============================================================
 NEGATION_TERMS = {
     "ras", "rien a signaler", "rien à signaler",
@@ -73,14 +135,8 @@ NEGATION_TERMS = {
 }
 
 # ============================================================
-# VALIDATION DES DATES — post-traitement, catégorie
-# "dates_importantes" uniquement.
-# Qwen a tendance à y glisser du texte qui n'est pas une date
-# (formules de politesse, instructions de soin, durées...).
-# On ne RE-extrait rien : on vérifie juste que l'entité déjà
-# sortie par Qwen contient bel et bien une date reconnaissable,
-# avec un contrôle de plausibilité (jour 1-31, mois 1-12) pour
-# écarter les dates corrompues par l'OCR (ex: "23/C5/2008").
+# VALIDATION DES DATES — réutilisée pour valider tout champ date
+# rencontré (date_debut d'une entité, "dates_importantes", etc.)
 # ============================================================
 MONTHS_FR = (
     r'janvier|f[ée]vrier|mars|avril|mai|juin|juillet|'
@@ -88,25 +144,13 @@ MONTHS_FR = (
 )
 
 DATE_VALIDATION_PATTERNS = [
-    # JJ/MM/AAAA, JJ-MM-AAAA, JJ.MM.AAAA (jour/mois avec vérif plausibilité)
     re.compile(r'\b(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{2,4})\b'),
-    # "12 juin 1996", "1er octobre 2009"
     re.compile(rf'\b\d{{1,2}}(?:er)?\s+(?:{MONTHS_FR})\s+\d{{4}}\b', re.IGNORECASE),
-    # "octobre 2009" (mois + année sans jour)
     re.compile(rf'\b(?:{MONTHS_FR})\s+\d{{4}}\b', re.IGNORECASE),
 ]
 
 # ============================================================
-# VALIDATION DES ALERTES — post-traitement, catégorie
-# "points_attention" uniquement.
-# Constat (test sur échantillon réel) : malgré la consigne du prompt
-# ("uniquement si explicitement signalé comme alerte"), Qwen y range
-# parfois des conclusions banales/rassurantes ("Frottis non
-# inflammatoire, absence de cellule suspecte") ou des descriptions
-# cliniques ordinaires. On n'accepte une entrée que si elle contient
-# un vrai marqueur de mise en garde — même logique que la validation
-# des dates : on ne fait pas confiance au modèle seul sur un champ
-# aussi sensible.
+# VALIDATION DES ALERTES — inchangée, catégorie "points_attention"
 # ============================================================
 ALERT_MARKERS = [
     "attention", "contre-indication", "contre indication",
@@ -118,116 +162,211 @@ ALERT_MARKERS = [
 ]
 
 # ============================================================
-# SCHÉMA DE SORTIE — conserve exactement les clés de la v1
-# (pathologies_actives, antecedents_medicaux, etc.) pour ne
-# rien casser en aval (vsm_generator.py, test_pipeline.py)
+# FILTRE DISPOSITIFS_MEDICAUX — post-traitement déterministe (v3.5)
+# Constat sur run réel : malgré la consigne du prompt (avec
+# contre-exemple explicite "gastroscope"), Qwen continue d'y ranger du
+# matériel d'examen/imagerie utilisé PAR le médecin (échographe,
+# scanner, IRM, mammographe, gastroscope, trocarts...) plutôt que des
+# dispositifs réellement portés/implantés par le PATIENT. Comme pour
+# les négations et les alertes, on ne fait plus confiance au seul
+# prompt sur ce point — filtre déterministe en complément.
 # ============================================================
-OUTPUT_SCHEMA_KEYS = [
-    "pathologies_actives",
-    "antecedents_medicaux",
-    "antecedents_chirurgicaux",
-    "antecedents_familiaux",
-    "allergies_intolerances",
-    "traitements_en_cours",
-    "constantes_biologiques",
-    "vaccinations",
-    "facteurs_risque",
-    "examens_bilans",
-    "points_attention",
-    "dates_importantes",
+EXAM_EQUIPMENT_TERMS = [
+    "echograph", "echographie", "gastroscope", "scanner", "irm",
+    "mammographi", "radiologi", "radiographi", "osteodensitometri",
+    "cystoscope", "coelioscop", "trocart", "fibroscope", "endoscope",
+    "colonoscope", "cathetere de biopsie",
 ]
 
-SYSTEM_PROMPT = """Tu es un assistant médical spécialisé dans l'extraction d'informations \
+# ============================================================
+# SYSTEM PROMPT
+# ============================================================
+# ============================================================
+# SYSTEM PROMPTS — v3.2 : DÉCOUPÉ EN 2 APPELS PAR PAGE
+#
+# FIX 2 (suite au Fix 1, qui a été réfuté par les tests) : un test sur
+# données réelles a montré que le budget de tokens n'était PAS le
+# problème (num_ctx/num_predict larges, aucun échec de parsing JSON
+# loggé) — mais que Qwen, face à un schéma trop riche en un seul appel
+# (14 catégories, dont 8 objets structurés), répond avec un JSON
+# valide mais quasi entièrement vide sur la plupart des catégories. Un
+# modèle 3B semble "abandonner" silencieusement plutôt que de mal
+# répondre quand on lui demande trop de choses à la fois.
+#
+# Solution : DEUX appels Qwen par page, chacun avec un schéma plus
+# restreint (7 catégories au lieu de 14). Coût :2x plus d'appels donc
+# plus lent par page, mais chaque appel a une consigne plus simple à
+# suivre — objectif : retrouver un taux de remplissage proche de la v2
+# (schéma simple, listes plates) tout en gardant les objets {texte,
+# date} et les nouvelles sections conformes HAS.
+# ============================================================
+
+GROUP1_KEYS = [
+    "pathologies_actives", "antecedents_medicaux", "antecedents_familiaux",
+    "historique_actes", "allergies_intolerances",
+    "effets_indesirables_medicaments", "traitements_en_cours",
+]
+GROUP2_KEYS = [
+    "constantes", "dispositifs_medicaux", "points_attention",
+    "vaccinations", "facteurs_risque", "examens_bilans", "dates_importantes",
+]
+
+SYSTEM_PROMPT_GROUP1 = """Tu es un assistant médical spécialisé dans l'extraction d'informations \
 structurées à partir de documents médicaux français (ordonnances, comptes rendus, \
 courriers médecin, résultats biologiques, résultats imagerie). Le texte fourni est \
 issu d'un OCR et peut contenir des imperfections.
 
 RÈGLES :
 1. Extrais UNIQUEMENT les informations explicitement présentes dans le texte. N'invente rien.
-2. Si une catégorie n'a rien à extraire, retourne une liste vide — ne force jamais une entrée.
-3. Formule chaque entité en une chaîne courte MAIS COMPLÈTE, avec le contexte utile trouvé
-   dans le texte (résultat, conclusion, dosage, posologie...). Ne te contente jamais du
-   seul nom de l'entité si le texte donne plus de détails autour.
-4. Relis le texte entièrement avant de répondre : les dates, en particulier, apparaissent
-   souvent à PLUSIEURS endroits différents du document (date de prescription, date
-   d'enregistrement, date de l'acte...) — il faut TOUTES les extraire, pas seulement la
-   première trouvée.
-5. Chaque entité va dans UNE SEULE catégorie, la plus précise possible :
-   - un événement déjà opéré va dans antecedents_chirurgicaux, pas dans antecedents_medicaux
-   - un antécédent qui concerne un membre de la famille (père, mère, frère/sœur...) va dans
-     antecedents_familiaux, JAMAIS dans antecedents_medicaux (qui est réservé aux antécédents
-     personnels du patient)
-   - un événement médical déjà survenu (pathologie passée ou active) ne va PAS dans
-     facteurs_risque (les facteurs de risque sont des éléments de mode de vie/hérédité,
-     pas des diagnostics déjà posés)
-   - une valeur biologique chiffrée (ex: "Hémoglobine 13,4 g/dl") va dans
-     constantes_biologiques, pas dans examens_bilans
-6. points_attention : uniquement les alertes ou consignes urgentes EXPLICITEMENT signalées
-   comme telles dans le texte (ex: "ATTENTION", "contre-indication formelle", "à ne jamais
-   administrer", consigne de sécurité mise en avant). Ne mets rien ici par défaut — la
-   plupart des documents n'en contiennent pas, retourne une liste vide dans ce cas.
+2. Si une catégorie n'a rien à extraire, retourne une liste vide.
+3. Formule chaque "texte" de façon courte MAIS COMPLÈTE, avec le contexte utile trouvé
+   dans le texte (résultat, dosage, posologie...).
+4. Mets une date UNIQUEMENT si elle est explicitement associée à cette entité précise.
+   Si aucune date claire ne s'y rattache, mets null — N'INVENTE JAMAIS une date.
+5. Chaque entité va dans UNE SEULE catégorie, la plus précise possible.
 
-EXEMPLE :
-
-Texte source :
-"Prescrit le 09/10/2014. Enregistré le 10/10/2014. FROTTIS DE DEPISTAGE : Ménopause.
-Le fond est propre. CONCLUSION : Frottis satisfaisant, non inflammatoire dans le cadre
-d'une ménopause subatrophique. Absence de cellule suspecte sur les frottis examinés."
-
-Réponse attendue :
-{
-  "pathologies_actives": ["Ménopause subatrophique"],
-  "antecedents_medicaux": [],
-  "antecedents_chirurgicaux": [],
-  "antecedents_familiaux": [],
-  "allergies_intolerances": [],
-  "traitements_en_cours": [],
-  "constantes_biologiques": [],
-  "vaccinations": [],
-  "facteurs_risque": [],
-  "examens_bilans": ["Frottis de dépistage cervico-vaginal : satisfaisant, non inflammatoire, absence de cellule suspecte"],
-  "points_attention": [],
-  "dates_importantes": ["Prescrit le 09/10/2014", "Enregistré le 10/10/2014"]
-}
-
-Remarque : le texte source contient DEUX dates distinctes, et les deux sont extraites.
-La conclusion médicale ("ménopause subatrophique") est reprise dans les pathologies,
-pas seulement mentionnée dans les examens.
+DÉFINITIONS :
+- pathologies_actives : problèmes de santé EN COURS actuellement. {"texte", "date_debut"}
+- antecedents_medicaux : problèmes passés, guéris, PERSONNELS au patient (pas la famille).
+  {"texte", "date_debut"}
+- antecedents_familiaux : antécédents d'un membre de la famille (père, mère, frère/sœur...),
+  JAMAIS dans antecedents_medicaux. {"texte", "date_debut", "parent"} où "parent" identifie
+  le membre concerné si mentionné, sinon null.
+- historique_actes : actes chirurgicaux/diagnostic invasif/thérapeutiques RÉALISÉS
+  (ex: appendicectomie, exérèse de kyste, pose de plaque...). {"texte", "date"}
+- allergies_intolerances : réaction NON PRÉVISIBLE, non liée à la dose. {"texte", "date_debut"}
+- effets_indesirables_medicaments : effet secondaire PRÉVISIBLE, dose-dépendant, d'un
+  médicament précis (différent d'une allergie). {"texte", "medicament", "date_debut"}
+- traitements_en_cours : médicaments pris par le patient. {"texte", "date_debut", "type"}
+  où type vaut "long_cours" (chronique/de fond) ou "aigu" (ponctuel). Défaut : "long_cours".
 
 Réponds STRICTEMENT en JSON valide, sans texte avant ou après, selon ce schéma exact :
 
 {
-  "pathologies_actives": ["string", ...],
-  "antecedents_medicaux": ["string", ...],
-  "antecedents_chirurgicaux": ["string", ...],
-  "antecedents_familiaux": ["string", ...],
-  "allergies_intolerances": ["string", ...],
-  "traitements_en_cours": ["string", ...],
-  "constantes_biologiques": ["string", ...],
+  "pathologies_actives": [{"texte": "string", "date_debut": "string ou null"}, ...],
+  "antecedents_medicaux": [{"texte": "string", "date_debut": "string ou null"}, ...],
+  "antecedents_familiaux": [{"texte": "string", "date_debut": "string ou null", "parent": "string ou null"}, ...],
+  "historique_actes": [{"texte": "string", "date": "string ou null"}, ...],
+  "allergies_intolerances": [{"texte": "string", "date_debut": "string ou null"}, ...],
+  "effets_indesirables_medicaments": [{"texte": "string", "medicament": "string ou null", "date_debut": "string ou null"}, ...],
+  "traitements_en_cours": [{"texte": "string", "date_debut": "string ou null", "type": "long_cours ou aigu"}, ...]
+}
+
+EXEMPLE :
+
+Texte source :
+"Mme BANANE Sophie. Ménopause subatrophique depuis octobre 2009. Antécédents familiaux :
+cancer du sein chez la mère. Traitement en cours : Rivotril 20 gouttes le soir au long
+cours. Cure de kyste sous-urétral en juillet 2008 (intervention chirurgicale)."
+
+Réponse attendue :
+{
+  "pathologies_actives": [{"texte": "Ménopause subatrophique", "date_debut": "octobre 2009"}],
+  "antecedents_medicaux": [],
+  "antecedents_familiaux": [{"texte": "Cancer du sein", "date_debut": null, "parent": "mère"}],
+  "historique_actes": [{"texte": "Cure de kyste sous-urétral", "date": "juillet 2008"}],
+  "allergies_intolerances": [],
+  "effets_indesirables_medicaments": [],
+  "traitements_en_cours": [{"texte": "Rivotril 20 gouttes le soir", "date_debut": null, "type": "long_cours"}]
+}
+"""
+
+SYSTEM_PROMPT_GROUP2 = """Tu es un assistant médical spécialisé dans l'extraction d'informations \
+structurées à partir de documents médicaux français (ordonnances, comptes rendus, \
+courriers médecin, résultats biologiques, résultats imagerie). Le texte fourni est \
+issu d'un OCR et peut contenir des imperfections.
+
+RÈGLES :
+1. Extrais UNIQUEMENT les informations explicitement présentes dans le texte. N'invente rien.
+2. Si une catégorie n'a rien à extraire, retourne une liste vide.
+3. Formule chaque élément de façon courte MAIS COMPLÈTE, avec le contexte utile trouvé
+   dans le texte (résultat, valeur, conclusion...).
+
+DÉFINITION DE "constantes" (signes vitaux uniquement) :
+- {"signe_vital", "valeur", "date"}
+- Concerne UNIQUEMENT : Poids, Taille, IMC, Fréquence cardiaque, Tension artérielle,
+  Température, Saturation O2 (SpO2). PAS les valeurs de biologie sanguine (créatinine,
+  cholestérol, hémoglobine...) — celles-ci vont dans "examens_bilans".
+
+CATÉGORIES (listes de chaînes) :
+- dispositifs_medicaux : dispositifs implantés ou PORTÉS PAR LE PATIENT (prothèse,
+  pacemaker, sonde à demeure, cathéter, fauteuil roulant...). NE PAS inclure le matériel
+  d'examen utilisé PAR le médecin pour l'examiner (échographe, gastroscope, appareil
+  d'IRM...) — ce n'est pas un dispositif du patient. Liste vide si aucun mentionné.
+- points_attention : UNIQUEMENT les alertes explicitement signalées comme telles
+  (ex: "ATTENTION", "contre-indication formelle", "à ne jamais administrer"). Liste
+  vide dans la grande majorité des documents.
+- vaccinations : vaccins mentionnés.
+- facteurs_risque : éléments de mode de vie/hérédité (tabac, alcool, sédentarité...),
+  PAS un diagnostic déjà posé.
+- examens_bilans : résultats de biologie, imagerie, anatomopathologie, avec leur valeur/
+  conclusion, SAUF les signes vitaux (voir "constantes" ci-dessus).
+- dates_importantes : dates administratives non rattachées à une entité clinique précise
+  (date de prescription du courrier, date d'enregistrement...).
+
+Réponds STRICTEMENT en JSON valide, sans texte avant ou après, selon ce schéma exact :
+
+{
+  "constantes": [{"signe_vital": "string", "valeur": "string", "date": "string ou null"}, ...],
+  "dispositifs_medicaux": ["string", ...],
+  "points_attention": ["string", ...],
   "vaccinations": ["string", ...],
   "facteurs_risque": ["string", ...],
   "examens_bilans": ["string", ...],
-  "points_attention": ["string", ...],
   "dates_importantes": ["string", ...]
 }
+
+EXEMPLE :
+
+Texte source :
+"Prescrit le 09/10/2014. FROTTIS DE DEPISTAGE. Poids : 65 kg. TA : 13/7. CONCLUSION :
+Frottis satisfaisant, non inflammatoire, absence de cellule suspecte. Gastroscope Olympus
+XQ 30 utilisé pour l'examen."
+
+Réponse attendue :
+{
+  "constantes": [{"signe_vital": "Poids", "valeur": "65 kg", "date": "09/10/2014"}, {"signe_vital": "TA", "valeur": "13/7", "date": "09/10/2014"}],
+  "dispositifs_medicaux": [],
+  "points_attention": [],
+  "vaccinations": [],
+  "facteurs_risque": [],
+  "examens_bilans": ["Frottis de dépistage cervico-vaginal : satisfaisant, non inflammatoire, absence de cellule suspecte"],
+  "dates_importantes": ["Prescrit le 09/10/2014"]
+}
+
+Remarque : le gastroscope n'est PAS dans dispositifs_medicaux (matériel du médecin, pas du patient).
+
+DEUXIÈME EXEMPLE — texte OCR de type "tableau de résultats" (fréquent sur les pages de
+biologie) : contrairement à l'exemple ci-dessus, ce texte n'a PAS de phrases complètes,
+juste des noms de dosages, valeurs, unités et plages de référence collés les uns aux
+autres. Il faut quand même extraire CHAQUE valeur individuellement.
+
+Texte source :
+"Mme BANANE Sophie dossier du 07/08/00 BIOCHIMIE VITROS Normales Anterieurs
+CREATININE 8,4 mg/l 7,0a12,0 74 umol/l 62a106 IONOGRAMME SODIUM 140 mEq/l 135a145
+POTASSIUM 4,0 mEq/l 3,5a5,0 CHLORE 105 mEq/l 95a108"
+
+Réponse attendue :
+{
+  "constantes": [],
+  "dispositifs_medicaux": [],
+  "points_attention": [],
+  "vaccinations": [],
+  "facteurs_risque": [],
+  "examens_bilans": ["Créatinine : 8,4 mg/l", "Sodium : 140 mEq/l", "Potassium : 4,0 mEq/l", "Chlore : 105 mEq/l"],
+  "dates_importantes": ["Dossier du 07/08/00"]
+}
+
+Remarque : chaque dosage (nom + valeur + unité) devient une entrée séparée dans
+examens_bilans, même sans phrase complète autour. Les plages de référence ("7,0a12,0")
+ne sont pas extraites, seulement la valeur mesurée du patient.
 """
 
 
 class NERExtractor:
     """
-    Extraction d'entités médicales 100% via Qwen2.5-VL (mode texte, Ollama).
-    Conforme au référentiel VSM HAS / CI-SIS.
-
-    Entités extraites :
-    - Pathologies actives
-    - Antécédents médicaux et chirurgicaux
-    - Allergies et intolérances
-    - Traitements en cours
-    - Constantes biologiques et cliniques
-    - Vaccinations
-    - Facteurs de risque
-    - Examens et bilans
-    - Dates importantes
+    Extraction d'entités médicales via Qwen2.5-VL (mode texte, Ollama),
+    schéma conforme HAS/CI-SIS IPS-FR_2024.01 (objets {texte, date}).
     """
 
     def __init__(self, ollama_url: str = OLLAMA_URL, model: str = MODEL_NAME,
@@ -238,7 +377,7 @@ class NERExtractor:
         self.timeout = timeout
 
     # ------------------------------------------------------------------
-    # Normalisation (reprise de la v1, toujours utile en amont de Qwen)
+    # Normalisation
     # ------------------------------------------------------------------
     def _normalize_text(self, text: str) -> str:
         text = re.sub(r'\s+', ' ', text)
@@ -247,25 +386,11 @@ class NERExtractor:
         return text.strip()
 
     # ------------------------------------------------------------------
-    # Identité patient — extraction déterministe par regex, PAS par Qwen.
-    # Contrairement aux entités cliniques (langage trop variable pour du
-    # regex), le nom et la date de naissance suivent des formats très
-    # stables ("Mme/M. NOM Prénom", "né(e) le JJ/MM/AAAA"). Un LLM sur ce
-    # type de donnée n'apporte rien et ajoute un risque d'erreur sur
-    # l'information la plus critique du VSM — on reste 100% déterministe.
+    # Identité patient — regex déterministe, indépendant de Qwen
     # ------------------------------------------------------------------
     def extract_patient_identity(self, text: str) -> dict:
-        """
-        Retourne {"nom_complet": str|None, "date_naissance": str|None,
-        "medecin_traitant": str|None} à partir du texte d'UNE page.
-        Champs à None si non trouvés — on ne devine jamais.
-        """
         identity = {"nom_complet": None, "date_naissance": None, "medecin_traitant": None}
 
-        # Nom : civilité (Mme/M./Madame/Monsieur) suivie du nom (majuscules)
-        # puis du prénom (1 mot capitalisé max, pour éviter de capturer le
-        # mot suivant dans la phrase si le texte OCR n'a pas de ponctuation
-        # claire — ex: "Mme BANANE Sophie Prescrit le..." sans virgule).
         name_match = re.search(
             r'\b(?:Mme|M\.|Madame|Monsieur)\s+'
             r'([A-ZÀ-Ÿ][A-ZÀ-Ÿ\-]{1,}(?:\s+[A-ZÀ-Ÿ][a-zà-ÿ\-]+){0,1})',
@@ -274,7 +399,6 @@ class NERExtractor:
         if name_match:
             identity["nom_complet"] = name_match.group(1).strip()
 
-        # Date de naissance : "né(e) le JJ/MM/AAAA" ou "date de naissance : ..."
         dob_match = re.search(
             r"(?:n[ée]\(?e?\)?\s+le|date\s+de\s+naissance\s*[:\-]?)\s*"
             r"(\d{1,2}[/\-.]\d{1,2}[/\-.]\d{2,4})",
@@ -285,9 +409,6 @@ class NERExtractor:
             if 1 <= int(day) <= 31 and 1 <= int(month) <= 12:
                 identity["date_naissance"] = dob_match.group(1)
 
-        # Médecin traitant déclaré — rarement explicite dans un dossier
-        # scanné classique (c'est une notion administrative du DMP), on le
-        # cherche quand même au cas où, sans jamais forcer une valeur.
         gp_match = re.search(
             r'm[ée]decin\s+traitant\s*(?:d[ée]clar[ée])?\s*[:\-]?\s*'
             r'(Dr\.?\s*[A-ZÀ-Ÿ][a-zà-ÿA-ZÀ-Ÿ\-]+)',
@@ -299,25 +420,14 @@ class NERExtractor:
         return identity
 
     def merge_patient_identity(self, per_page_identities: list[dict]) -> dict:
-        """
-        Fusionne l'identité détectée sur plusieurs pages. Pour chaque champ,
-        on garde la valeur la plus fréquente parmi les pages où elle a été
-        trouvée (vote majoritaire) — ça absorbe les erreurs OCR ponctuelles
-        sur une page isolée (ex: date corrompue "Z3[o6]88" sur une page,
-        correcte ailleurs).
-        """
-        from collections import Counter
-
         merged = {}
         for field in ("nom_complet", "date_naissance", "medecin_traitant"):
             values = [p[field] for p in per_page_identities if p.get(field)]
             merged[field] = Counter(values).most_common(1)[0][0] if values else None
-
         return merged
 
     # ------------------------------------------------------------------
-    # Point d'entrée principal — UNE page / UN texte
-    # (signature conservée : extract(text, document_type))
+    # Point d'entrée principal
     # ------------------------------------------------------------------
     def extract(self, text: str, document_type: str = "inconnu") -> dict:
         if not text or len(text.strip()) < 10:
@@ -329,8 +439,6 @@ class NERExtractor:
         result = {key: entities.get(key, []) for key in OUTPUT_SCHEMA_KEYS}
         result["document_type"] = document_type
         result["extraction_method"] = "qwen_only"
-        # Identité patient : extraction déterministe (regex), indépendante
-        # de Qwen — voir extract_patient_identity() pour la justification.
         result["identite_patient"] = self.extract_patient_identity(text)
         return result
 
@@ -343,120 +451,314 @@ class NERExtractor:
         return result
 
     # ------------------------------------------------------------------
-    # num_ctx dynamique : évite d'allouer 8192 tokens de contexte pour
-    # une page de quelques lignes. On estime ~1 token ≈ 4 caractères
-    # (approximation standard pour du français), on ajoute le system
-    # prompt (+few-shot) + une marge pour la réponse JSON générée.
+    # num_ctx dynamique + num_predict explicite
+    #
+    # v3.1 — FIX 1 : le schéma v3 (objets {texte, date} au lieu de
+    # simples chaînes) coûte 2-3x plus de tokens par entité qu'en v2.
+    # Une marge de réponse FIXE (768 tokens en v3.0) s'est révélée
+    # insuffisante sur les pages à forte densité d'entités (ex: page de
+    # résultats de biologie avec 15 valeurs) — Qwen tronque/abandonne
+    # silencieusement les catégories les plus coûteuses. On rend cette
+    # marge PROPORTIONNELLE à la taille du texte source (plus de texte
+    # source ~ plus d'entités probables ~ plus de tokens de sortie
+    # nécessaires), et on fixe explicitement num_predict (jamais fait
+    # avant — Ollama peut appliquer une limite de génération par défaut
+    # indépendante de num_ctx si on ne la précise pas).
     # ------------------------------------------------------------------
-    def _compute_num_ctx(self, text: str) -> int:
+    def _compute_num_ctx(self, text: str, system_prompt: str) -> int:
         estimated_tokens = len(text) // 4
-        prompt_overhead = len(SYSTEM_PROMPT) // 4
-        response_margin = 512  # marge pour le JSON de sortie
+        prompt_overhead = len(system_prompt) // 4
+        response_margin = self._estimate_response_tokens(estimated_tokens)
 
         needed = estimated_tokens + prompt_overhead + response_margin
-        # arrondi au multiple de 512 supérieur (Ollama gère mieux ces tailles)
         needed = ((needed // 512) + 1) * 512
 
         return max(NUM_CTX_MIN, min(needed, self.num_ctx_max))
 
+    def _estimate_response_tokens(self, input_tokens: int) -> int:
+        """
+        Marge de réponse proportionnelle au texte source, avec un
+        plancher confortable. NOTE (v3.2) : un test sur données réelles
+        a montré que ce n'était PAS le facteur limitant principal (voir
+        Fix 2 / découpage en 2 appels ci-dessous) — mais on garde cette
+        marge généreuse par prudence, en complément du vrai fix.
+        """
+        return max(1536, input_tokens * 2)
+
+    def _compute_num_predict(self, num_ctx: int, prompt_overhead: int) -> int:
+        available = num_ctx - prompt_overhead
+        return max(1024, min(available, 4096))
+
     # ------------------------------------------------------------------
-    # Appel Qwen (texte pur, pas vision) + parsing robuste
+    # Appel Qwen + parsing — v3.2 : DEUX appels par page (voir note en
+    # tête de fichier sur SYSTEM_PROMPT_GROUP1/GROUP2). Chaque appel
+    # retourne un dict PARTIEL non filtré ; on les fusionne (les deux
+    # groupes ont des clés disjointes) avant d'appliquer _sanitize()
+    # UNE SEULE FOIS sur l'ensemble — tous les filtres/priorités
+    # inter-catégories (ex: allergie vs traitement) ont besoin de voir
+    # les deux groupes en même temps pour fonctionner correctement.
     # ------------------------------------------------------------------
     def _call_qwen(self, text: str) -> dict:
-        empty = {k: [] for k in OUTPUT_SCHEMA_KEYS}
-        num_ctx = self._compute_num_ctx(text)
+        raw_group1 = self._call_qwen_group(text, SYSTEM_PROMPT_GROUP1, GROUP1_KEYS)
+        raw_group2 = self._call_qwen_group(text, SYSTEM_PROMPT_GROUP2, GROUP2_KEYS)
+
+        merged_raw = {**raw_group1, **raw_group2}
+        return self._sanitize(merged_raw)
+
+    def _call_qwen_group(self, text: str, system_prompt: str, expected_keys: list,
+                          max_attempts: int = 2) -> dict:
+        """
+        Un appel Qwen pour UN groupe de catégories, retourne un dict brut
+        (non sanitizé). RETRY (v3.3) : si le JSON produit est mal formé,
+        on retente une seconde fois avant d'abandonner — un nouvel appel
+        avec la même température non nulle (0.1) donne souvent un
+        résultat différent, potentiellement valide cette fois. On ne
+        retente PAS si Qwen a répondu un JSON valide mais légitimement
+        vide (ce n'est pas un échec, juste une page sans contenu pour ce
+        groupe) — seul un échec de PARSING déclenche une nouvelle tentative.
+        """
+        empty = {k: [] for k in expected_keys}
+        last_result = empty
+
+        for attempt in range(1, max_attempts + 1):
+            content = self._request_qwen(text, system_prompt, expected_keys, attempt)
+            if content is None:
+                return empty  # erreur réseau/Ollama, inutile de retenter
+
+            parsed, success = self._parse_json_raw(content, expected_keys)
+            if success:
+                if attempt > 1:
+                    logger.info(f"Tentative {attempt}/{max_attempts} : JSON valide obtenu "
+                                f"après échec de la première tentative.")
+                return parsed
+
+            last_result = parsed
+            if attempt < max_attempts:
+                logger.warning(f"Tentative {attempt}/{max_attempts} : JSON invalide, "
+                                f"nouvelle tentative...")
+
+        logger.warning(f"Échec après {max_attempts} tentatives — résultat vide retourné pour ce groupe.")
+        return last_result
+
+    def _request_qwen(self, text: str, system_prompt: str, expected_keys: list,
+                       attempt: int) -> Optional[str]:
+        """
+        Effectue l'appel HTTP à Ollama, retourne le contenu brut (str) ou
+        None en cas d'erreur réseau.
+
+        Température variable selon la tentative (v3.4) : à température
+        basse (0.1, quasi déterministe), une nouvelle tentative après
+        échec de parsing régénère souvent la MÊME erreur — retenter avec
+        les mêmes paramètres ne sert à rien. On monte la température sur
+        les tentatives suivantes pour donner une vraie chance d'obtenir
+        une réponse différente, potentiellement valide.
+        """
+        num_ctx = self._compute_num_ctx(text, system_prompt)
+        prompt_overhead = (len(system_prompt) + len(text)) // 4
+        num_predict = self._compute_num_predict(num_ctx, prompt_overhead)
+        temperature = BASE_TEMPERATURE if attempt == 1 else RETRY_TEMPERATURE
 
         payload = {
             "model": self.model,
             "messages": [
-                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "system", "content": system_prompt},
                 {"role": "user", "content": f"Texte médical à analyser :\n\n{text}"},
             ],
             "stream": False,
             "format": "json",
-            "options": {
-                "num_ctx": num_ctx,
-                "temperature": 0.1,
-            },
+            "options": {"num_ctx": num_ctx, "num_predict": num_predict, "temperature": temperature},
         }
 
-        logger.info(f"Appel Qwen NER — texte={len(text)} caractères, num_ctx={num_ctx}")
+        logger.info(f"Appel Qwen NER (groupe {list(expected_keys)[:2]}..., "
+                    f"tentative {attempt}, temperature={temperature}) — "
+                    f"texte={len(text)} caractères, num_ctx={num_ctx}, num_predict={num_predict}")
 
         try:
             response = requests.post(self.ollama_url, json=payload, timeout=self.timeout)
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
-            logger.error(f"Erreur appel Qwen (NER) : {e}")
-            return empty
+            logger.error(f"Erreur appel Qwen (NER, groupe) : {e}")
+            return None
 
         try:
-            content = response.json()["message"]["content"]
+            return response.json()["message"]["content"]
         except (KeyError, json.JSONDecodeError) as e:
-            logger.error(f"Réponse Ollama inattendue (NER) : {e}")
-            return empty
+            logger.error(f"Réponse Ollama inattendue (NER, groupe) : {e}")
+            return None
 
-        return self._parse_json_response(content)
-
-    def _parse_json_response(self, content: str) -> dict:
-        empty = {k: [] for k in OUTPUT_SCHEMA_KEYS}
+    def _parse_json_raw(self, content: str, expected_keys: list) -> tuple:
+        """
+        Parse le JSON brut d'UN groupe, SANS appliquer _sanitize (fait
+        une seule fois après fusion des deux groupes, dans _call_qwen).
+        Retourne (dict, succès) — succès=False uniquement en cas
+        d'échec de PARSING (pour déclencher le retry), pas quand le
+        JSON est valide mais légitimement vide.
+        """
+        empty = {k: [] for k in expected_keys}
 
         try:
-            parsed = json.loads(content)
-            return self._sanitize(parsed)
+            return json.loads(content), True
         except json.JSONDecodeError:
             pass
 
         match = re.search(r"\{.*\}", content, re.DOTALL)
         if match:
             try:
-                parsed = json.loads(match.group(0))
-                return self._sanitize(parsed)
+                return json.loads(match.group(0)), True
             except json.JSONDecodeError:
                 pass
 
-        logger.warning("Impossible de parser le JSON Qwen (NER), résultat vide retourné.")
-        logger.debug(f"Réponse brute Qwen (NER) : {content[:500]}")
-        return empty
+        logger.debug(f"Réponse brute Qwen (groupe) non parsable : {content[:500]}")
+        return empty, False
 
+    # ------------------------------------------------------------------
+    # Sanitize — dispatch par type de catégorie (objet / constante / string)
+    # ------------------------------------------------------------------
     def _sanitize(self, parsed: dict) -> dict:
         clean = {}
-        for key in OUTPUT_SCHEMA_KEYS:
-            value = parsed.get(key, [])
-            if not isinstance(value, list):
-                value = []
-            entries = [str(v).strip() for v in value if str(v).strip()]
+
+        for key, date_field in OBJECT_CATEGORIES.items():
+            raw_list = parsed.get(key, [])
+            clean[key] = self._sanitize_object_list(raw_list, date_field, key)
+
+        clean[CONSTANTES_KEY] = self._sanitize_constantes(parsed.get(CONSTANTES_KEY, []))
+
+        for key in STRING_CATEGORIES:
+            raw_list = parsed.get(key, [])
+            entries = self._sanitize_string_list(raw_list)
             entries = [e for e in entries if not self._is_negation(e)]
 
             if key == "dates_importantes":
                 entries = [e for e in entries if self._contains_valid_date(e)]
-
             if key == "points_attention":
-                # 1. Marqueur d'alerte requis (déjà en place)
                 entries = [e for e in entries if self._contains_alert_marker(e)]
-                # 2. Plafond de longueur : une vraie alerte clinique est une
-                # consigne courte. Un bloc de 150+ mots (ex: un courrier
-                # syndical scanné par erreur qui contient le mot "Attention")
-                # n'est jamais une alerte légitime — c'est du bruit qui a
-                # échappé au filtre de marqueur.
                 entries = [e for e in entries if len(e) <= 200]
+            if key == "dispositifs_medicaux":
+                entries = [e for e in entries if not self._is_exam_equipment(e)]
 
             clean[key] = entries
 
         clean = self._resolve_allergy_conflicts(clean)
         clean = self._resolve_attention_conflicts(clean)
         clean = self._resolve_category_priority(clean)
+
         return clean
 
+    def _sanitize_object_list(self, raw_list: list, date_field: str, category: str) -> list:
+        """
+        Nettoie une liste d'objets {texte, <date_field>, [medicament], [type]}.
+        Accepte aussi, en filet de sécurité, une liste de simples chaînes
+        (si Qwen ignore la consigne d'objet malgré le prompt) en les
+        convertissant en {texte: str, date_field: None}.
+        """
+        if not isinstance(raw_list, list):
+            return []
+
+        clean = []
+        for item in raw_list:
+            if isinstance(item, str):
+                texte = item.strip()
+                entry = {"texte": texte, date_field: None}
+            elif isinstance(item, dict):
+                texte = str(item.get("texte", "")).strip()
+                if not texte:
+                    continue
+                entry = {"texte": texte}
+                raw_date = item.get(date_field)
+                entry[date_field] = self._validate_date_field(raw_date)
+
+                if category == "effets_indesirables_medicaments":
+                    medicament = item.get("medicament")
+                    entry["medicament"] = str(medicament).strip() if medicament else None
+
+                if category == "antecedents_familiaux":
+                    parent = item.get("parent")
+                    entry["parent"] = str(parent).strip() if parent else None
+
+                if category == "traitements_en_cours":
+                    t_type = str(item.get("type", "")).strip().lower().replace(" ", "_")
+                    entry["type"] = t_type if t_type in TRAITEMENT_TYPES_VALIDES else "long_cours"
+            else:
+                continue
+
+            if not entry["texte"] or self._is_negation(entry["texte"]):
+                continue
+
+            clean.append(entry)
+
+        return clean
+
+    def _sanitize_constantes(self, raw_list: list) -> list:
+        if not isinstance(raw_list, list):
+            return []
+
+        clean = []
+        for item in raw_list:
+            if not isinstance(item, dict):
+                continue
+            signe_vital = str(item.get("signe_vital", "")).strip()
+            valeur = str(item.get("valeur", "")).strip()
+            if not signe_vital or not valeur:
+                continue
+            date = self._validate_date_field(item.get("date"))
+            clean.append({"signe_vital": signe_vital, "valeur": valeur, "date": date})
+
+        return clean
+
+    def _sanitize_string_list(self, raw_list: list) -> list:
+        """
+        Nettoie une liste de chaînes. Filet de sécurité (v3.5) : si Qwen
+        renvoie un OBJET au lieu d'une chaîne dans une catégorie "string"
+        (constaté en pratique : {'nom': 'Mammographie...', 'valeur': '...',
+        'date': '...'} au lieu d'une phrase), on le reformate en texte
+        lisible plutôt que d'afficher le dict Python brut tel quel.
+        """
+        if not isinstance(raw_list, list):
+            return []
+
+        result = []
+        for v in raw_list:
+            text = self._dict_to_readable_string(v) if isinstance(v, dict) else str(v).strip()
+            if text:
+                result.append(text)
+        return result
+
+    def _dict_to_readable_string(self, d: dict) -> str:
+        """Reformate un objet inattendu en phrase lisible, en essayant les
+        clés courantes dans un ordre logique avant de tout concaténer."""
+        parts = []
+        for key in ('nom', 'texte', 'signe_vital', 'valeur', 'resultat', 'date'):
+            value = d.get(key)
+            if value:
+                parts.append(str(value).strip())
+
+        if not parts:
+            parts = [str(v).strip() for v in d.values() if v]
+
+        if not parts:
+            return ""
+        if len(parts) <= 2:
+            return " : ".join(parts)
+        return f"{parts[0]} : {', '.join(parts[1:])}"
+
+    def _validate_date_field(self, raw_date) -> Optional[str]:
+        """
+        Valide un champ date individuel (pas une catégorie entière comme
+        en v2). Retourne la date si elle contient un format reconnaissable
+        et plausible, sinon None — jamais on ne rejette l'entité entière
+        pour une date invalide, on met juste le champ à None.
+        """
+        if not raw_date or not isinstance(raw_date, str):
+            return None
+        raw_date = raw_date.strip()
+        if not raw_date or raw_date.lower() in ("null", "none", "n/a"):
+            return None
+        return raw_date if self._contains_valid_date(raw_date) else None
+
+    # ------------------------------------------------------------------
+    # Négation / dates / alertes — logique de détection inchangée (v2)
+    # ------------------------------------------------------------------
     def _is_negation(self, value: str) -> bool:
-        """
-        Détecte si une entité extraite n'est en fait qu'une mention de
-        négation ("RAS", "sans particularité"...) et non une vraie donnée
-        clinique. Normalisation : minuscules, accents simplifiés, ponctuation
-        de bord retirée. Comparaison stricte sur la chaîne entière (pas de
-        sous-chaîne) pour ne jamais filtrer une entité légitime qui
-        contiendrait incidemment un de ces mots (ex: "Non fumeuse depuis 2020"
-        ne doit pas être filtré, seul un "Non" isolé doit l'être).
-        """
         normalized = value.lower().strip().strip(".:-").strip()
         normalized = (normalized
                       .replace('é', 'e').replace('è', 'e').replace('ê', 'e')
@@ -464,73 +766,81 @@ class NERExtractor:
         return normalized in NEGATION_TERMS
 
     def _contains_valid_date(self, value: str) -> bool:
-        """
-        Vérifie que l'entité contient une date plausible. Pour le format
-        numérique JJ/MM/AAAA, on valide en plus que jour et mois sont dans
-        des plages réalistes — ça permet d'écarter les dates corrompues par
-        l'OCR (ex: "23/C5/2008" ne matche déjà pas le pattern car 'C5' n'est
-        pas numérique ; "32/13/2020" matcherait le pattern mais serait rejeté
-        ici car jour/mois hors plage).
-        """
         for pattern in DATE_VALIDATION_PATTERNS:
             for match in pattern.finditer(value):
                 groups = match.groups()
-                if len(groups) == 3:  # format numérique JJ/MM/AAAA
+                if len(groups) == 3:
                     day, month, _year = groups
                     if 1 <= int(day) <= 31 and 1 <= int(month) <= 12:
                         return True
-                    continue  # ce match précis est invalide, on essaie la suite
+                    continue
                 else:
-                    return True  # format textuel (mois nommé) : déjà fiable
+                    return True
         return False
 
     def _contains_alert_marker(self, value: str) -> bool:
-        """
-        Vérifie qu'une entité de "points_attention" contient un vrai
-        marqueur de mise en garde. Sans ce filtre, Qwen y range parfois des
-        conclusions banales ("frottis non inflammatoire, absence de cellule
-        suspecte") qui ne sont pas des alertes — juste des phrases jugées
-        "notables" par le modèle. Normalisation : minuscules + accents
-        simplifiés, comparaison par sous-chaîne (contrairement à
-        _is_negation, ici on VEUT détecter la présence du marqueur n'importe
-        où dans la phrase, pas juste en tant que chaîne entière).
-        """
         normalized = value.lower()
         normalized = (normalized
                       .replace('é', 'e').replace('è', 'e').replace('ê', 'e')
                       .replace('à', 'a').replace('ù', 'u'))
         return any(marker in normalized for marker in ALERT_MARKERS)
 
+    def _is_exam_equipment(self, value: str) -> bool:
+        """
+        Détecte si une entrée de dispositifs_medicaux est en fait du
+        matériel d'examen/imagerie (échographe, scanner, gastroscope...)
+        plutôt qu'un dispositif porté/implanté par le patient. Filtre
+        déterministe, indépendant de la consigne du prompt.
+        """
+        normalized = value.lower()
+        normalized = (normalized
+                      .replace('é', 'e').replace('è', 'e').replace('ê', 'e')
+                      .replace('à', 'a').replace('ù', 'u'))
+        return any(term in normalized for term in EXAM_EQUIPMENT_TERMS)
+
+    # ------------------------------------------------------------------
+    # Helper générique : texte affichable d'une entrée, quelle que soit
+    # sa forme (objet avec "texte", objet "constante" avec signe_vital/
+    # valeur, ou simple chaîne) — utilisé par tous les filtres croisés.
+    # ------------------------------------------------------------------
+    def _display_text(self, entry) -> str:
+        if isinstance(entry, str):
+            return entry
+        if isinstance(entry, dict):
+            if "texte" in entry:
+                return entry["texte"]
+            if "signe_vital" in entry:
+                return f"{entry.get('signe_vital', '')} {entry.get('valeur', '')}".strip()
+        return str(entry)
+
+    def _leading_word(self, text: str) -> str:
+        words = re.findall(r"[A-Za-zÀ-ÿ]+", text)
+        return words[0].lower() if words else ""
+
+    # ------------------------------------------------------------------
+    # Conflit allergies / traitements (sécurité) — adapté aux objets
+    # ------------------------------------------------------------------
     def _resolve_allergy_conflicts(self, result: dict) -> dict:
-        """
-        Contrôle de cohérence critique pour la sécurité du patient : si une
-        entité apparaît à la fois dans "allergies_intolerances" et
-        "traitements_en_cours", c'est très probablement une confusion du
-        modèle (il a classé un médicament pris par la patiente comme une
-        allergie), pas une vraie coïncidence. On retire l'entité des
-        allergies dans ce cas — un traitement en cours mal classé est un
-        moindre mal comparé à une fausse allergie affichée dans un VSM.
-        """
         treatments = result.get("traitements_en_cours", [])
         allergies = result.get("allergies_intolerances", [])
 
         kept_allergies = []
         for allergy in allergies:
-            allergy_norm = allergy.lower().strip()
+            allergy_text = self._display_text(allergy).lower().strip()
             conflict = False
             for treatment in treatments:
-                treatment_norm = treatment.lower().strip()
-                similarity = SequenceMatcher(None, allergy_norm, treatment_norm).ratio()
+                treatment_text = self._display_text(treatment).lower().strip()
+                similarity = SequenceMatcher(None, allergy_text, treatment_text, autojunk=False).ratio()
                 is_substring = (
-                    len(allergy_norm) >= 4
-                    and (allergy_norm in treatment_norm or treatment_norm in allergy_norm)
+                    len(allergy_text) >= 4
+                    and (allergy_text in treatment_text or treatment_text in allergy_text)
                 )
                 if similarity >= FUZZY_DEDUP_THRESHOLD or is_substring:
                     conflict = True
                     logger.warning(
                         f"Conflit allergie/traitement détecté et résolu : "
-                        f"\"{allergy}\" retiré des allergies (présent aussi dans "
-                        f"les traitements en cours : \"{treatment}\")."
+                        f"\"{self._display_text(allergy)}\" retiré des allergies "
+                        f"(présent aussi en traitement : \"{self._display_text(treatment)}\")."
                     )
                     break
             if not conflict:
@@ -539,33 +849,15 @@ class NERExtractor:
         result["allergies_intolerances"] = kept_allergies
         return result
 
-    def _leading_word(self, text: str) -> str:
-        """Premier mot alphabétique d'une chaîne (utile pour repérer un nom
-        de médicament en tête d'une entrée)."""
-        words = re.findall(r"[A-Za-zÀ-ÿ]+", text)
-        return words[0].lower() if words else ""
-
+    # ------------------------------------------------------------------
+    # Conflit points_attention / traitements — garde le traitement,
+    # retire seulement l'alerte suspecte (cf. décision projet)
+    # ------------------------------------------------------------------
     def _resolve_attention_conflicts(self, result: dict) -> dict:
-        """
-        Contrôle de cohérence : constaté sur un vrai run, "Rivotril :
-        ATTENTION à ne jamais administrer" dans points_attention, alors que
-        "RIVOTRIL 20 gouttes le soir" est dans traitements_en_cours au même
-        moment — contradiction dangereuse.
-
-        Contrairement au cas allergie/traitement (mutuellement exclusifs par
-        définition), ici on garde le traitement et on retire seulement
-        l'alerte : un médicament qui revient plusieurs fois dans le dossier
-        avec un dosage cohérent est un signal plus fiable qu'une mise en
-        garde isolée, sans justification (pas de "suite à une allergie",
-        "suite à un effet indésirable"...) qu'on ne retrouve nulle part
-        ailleurs dans le document. On logue quand même l'avertissement, pour
-        qu'une vraie contre-indication documentée reste visible en révision
-        manuelle si jamais ce choix s'avère faux sur un autre dossier.
-        """
         treatments = result.get("traitements_en_cours", [])
         attentions = result.get("points_attention", [])
 
-        treatment_names = [self._leading_word(t) for t in treatments]
+        treatment_names = [self._leading_word(self._display_text(t)) for t in treatments]
         kept_attentions = []
 
         for attention in attentions:
@@ -574,14 +866,12 @@ class NERExtractor:
                 attention_name and len(attention_name) >= 4
                 and attention_name in treatment_names
             )
-
             if has_conflict:
                 logger.warning(
                     f"Contradiction détectée entre points_attention et "
-                    f"traitements_en_cours pour le médicament \"{attention_name}\" : "
-                    f"\"{attention}\" retiré des alertes (le traitement en cours, "
-                    f"plus souvent répété dans le dossier, est jugé plus fiable). "
-                    f"Révision manuelle recommandée sur ce point."
+                    f"traitements_en_cours pour \"{attention_name}\" : "
+                    f"\"{attention}\" retiré des alertes (traitement jugé plus "
+                    f"fiable, répété dans le dossier). Révision manuelle recommandée."
                 )
             else:
                 kept_attentions.append(attention)
@@ -589,35 +879,32 @@ class NERExtractor:
         result["points_attention"] = kept_attentions
         return result
 
-    def _remove_matches(self, source_list: list, reference_lists: list,
-                         reason: str) -> list:
-        """
-        Fonction générique : retire de source_list toute entité qui
-        fuzzy-matche une entité déjà présente dans l'une des reference_lists.
-        Utilisée pour appliquer une hiérarchie de priorité entre catégories
-        qui se chevauchent sémantiquement.
-        """
+    # ------------------------------------------------------------------
+    # Priorité inter-catégories — adapté aux objets + historique_actes
+    # remplace antecedents_chirurgicaux comme catégorie "chirurgicale"
+    # ------------------------------------------------------------------
+    def _remove_matches(self, source_list: list, reference_lists: list, reason: str) -> list:
         kept = []
         for item in source_list:
-            item_norm = item.lower().strip()
+            item_text = self._display_text(item).lower().strip()
             matched_ref = None
 
             for ref_list in reference_lists:
                 for ref in ref_list:
-                    ref_norm = ref.lower().strip()
-                    similarity = SequenceMatcher(None, item_norm, ref_norm).ratio()
+                    ref_text = self._display_text(ref).lower().strip()
+                    similarity = SequenceMatcher(None, item_text, ref_text, autojunk=False).ratio()
                     is_substring = (
-                        len(item_norm) >= 6 and len(ref_norm) >= 6
-                        and (item_norm in ref_norm or ref_norm in item_norm)
+                        len(item_text) >= 6 and len(ref_text) >= 6
+                        and (item_text in ref_text or ref_text in item_text)
                     )
                     if similarity >= FUZZY_DEDUP_THRESHOLD or is_substring:
-                        matched_ref = ref
+                        matched_ref = ref_text
                         break
                 if matched_ref:
                     break
 
             if matched_ref:
-                logger.info(f"{reason} : \"{item}\" retiré (déjà présent sous "
+                logger.info(f"{reason} : \"{item_text}\" retiré (déjà présent sous "
                             f"forme \"{matched_ref}\" dans une catégorie prioritaire).")
             else:
                 kept.append(item)
@@ -626,63 +913,40 @@ class NERExtractor:
 
     def _resolve_category_priority(self, result: dict) -> dict:
         """
-        Résout les chevauchements entre catégories qui se recoupent
-        sémantiquement, en appliquant une hiérarchie de priorité (la
-        catégorie la plus spécifique/structurée gagne, l'entité est retirée
-        de la catégorie la moins spécifique). Constaté sur documents réels :
-        une même entité ("Pneumothorax", une valeur d'hémoglobine...) peut
-        se retrouver dupliquée dans plusieurs catégories après fusion de
-        toutes les pages d'un dossier.
-
-        Règles appliquées :
-        1. Antécédent chirurgical > antécédent médical
-           (le chirurgical est une information plus précise)
-        2. Pathologie active / antécédent (médical ou chirurgical)
-           > facteur de risque
-           (un événement déjà survenu n'est plus juste un "risque" théorique)
-        3. Constante biologique > examen/bilan
-           (une valeur numérique structurée est plus utile qu'une mention
-           générique dans la liste des examens)
+        Règles :
+        1. historique_actes (acte réalisé) > antecedents_medicaux générique
+        2. pathologie active / antécédent (médical ou acte) > facteur de risque
+        3. constantes (signes vitaux structurés) > examens_bilans générique
         """
-        # Règle 1 : chirurgical prioritaire sur médical générique
         result["antecedents_medicaux"] = self._remove_matches(
             result.get("antecedents_medicaux", []),
-            [result.get("antecedents_chirurgicaux", [])],
-            reason="Priorité chirurgical > médical",
+            [result.get("historique_actes", [])],
+            reason="Priorité historique_actes > antécédent médical",
         )
 
-        # Règle 2 : pathologie/antécédent déjà survenu prioritaire sur facteur de risque
         result["facteurs_risque"] = self._remove_matches(
             result.get("facteurs_risque", []),
             [
                 result.get("pathologies_actives", []),
                 result.get("antecedents_medicaux", []),
-                result.get("antecedents_chirurgicaux", []),
+                result.get("historique_actes", []),
             ],
             reason="Priorité pathologie/antécédent > facteur de risque",
         )
 
-        # Règle 3 : constante biologique structurée prioritaire sur mention d'examen générique
         result["examens_bilans"] = self._remove_matches(
             result.get("examens_bilans", []),
-            [result.get("constantes_biologiques", [])],
-            reason="Priorité constante biologique > examen générique",
+            [result.get(CONSTANTES_KEY, [])],
+            reason="Priorité constante > examen générique",
         )
 
         return result
 
     # ------------------------------------------------------------------
-    # Extraction sur un DOCUMENT entier (toutes les pages) + fusion
+    # Extraction document entier + fusion
     # ------------------------------------------------------------------
     def extract_document(self, pages: list[str], document_type: str = "inconnu",
                           tracker=None) -> dict:
-        """
-        pages : liste de textes OCR, un par page (dans l'ordre du document).
-        tracker : PipelineTracker optionnel pour logguer la progression.
-
-        Retourne le JSON fusionné et dédoublonné (fuzzy matching) au niveau
-        du document entier, avec les mêmes clés que extract().
-        """
         per_page_results = []
 
         for i, page_text in enumerate(pages, start=1):
@@ -703,67 +967,67 @@ class NERExtractor:
         )
         return merged
 
-    # ------------------------------------------------------------------
-    # Fusion + dédoublonnage fuzzy (sans appel LLM, difflib stdlib)
-    # Méthode publique : réutilisable depuis test_pipeline.py pour fusionner
-    # les résultats NER de plusieurs pages, avec la même logique que
-    # extract_document() (garde toujours la formulation la plus détaillée).
-    # ------------------------------------------------------------------
     def merge_entities(self, per_page_results: list[dict]) -> dict:
         merged = {key: [] for key in OUTPUT_SCHEMA_KEYS}
 
         for page_result in per_page_results:
             for key in OUTPUT_SCHEMA_KEYS:
                 for value in page_result.get(key, []):
-                    self._add_with_dedup(merged[key], value)
+                    self._add_with_dedup(merged[key], value, key)
 
-        # Re-applique le contrôle allergie/traitement au niveau document :
-        # un conflit peut n'apparaître qu'après fusion (allergie mentionnée
-        # page 5, même médicament en traitement page 80, par ex.).
         merged = self._resolve_allergy_conflicts(merged)
         merged = self._resolve_attention_conflicts(merged)
         merged = self._resolve_category_priority(merged)
 
         return merged
 
-    def _add_with_dedup(self, existing_list: list, new_value: str) -> None:
+    def _add_with_dedup(self, existing_list: list, new_value, category: str) -> None:
         """
-        Ajoute new_value à existing_list, en fusionnant avec un doublon proche.
-        Deux critères de doublon (l'un ou l'autre suffit) :
-          1. Similarité globale (SequenceMatcher) >= FUZZY_DEDUP_THRESHOLD
-             -> attrape les reformulations proches ("diabete type 2" vs
-             "diabete de type 2").
-          2. Inclusion : la version courte est un sous-ensemble textuel de
-             la version longue -> attrape le cas fréquent où Qwen extrait la
-             même entité avec plus de détails sur une autre page
-             ("Metformine 1000mg" vs "Metformine 1000mg matin et soir").
-        Dans les deux cas, on garde la formulation la plus longue/détaillée.
+        Dédoublonnage fuzzy générique (texte + éventuellement objet).
+        En cas de doublon : garde l'entrée avec un texte plus détaillé,
+        ET si l'une a une date renseignée et l'autre non, garde celle
+        AVEC la date (ne perd jamais une date au profit d'un texte
+        légèrement plus long sans date).
         """
-        new_norm = new_value.lower().strip()
+        new_text = self._display_text(new_value)
+        new_norm = new_text.lower().strip()
 
         for i, existing_value in enumerate(existing_list):
-            existing_norm = existing_value.lower().strip()
+            existing_text = self._display_text(existing_value)
+            existing_norm = existing_text.lower().strip()
 
-            similarity = SequenceMatcher(None, existing_norm, new_norm).ratio()
-            # Garde-fou : n'applique la règle d'inclusion qu'à partir de 6
-            # caractères, pour éviter qu'une entité courte ("TA", "IMC")
-            # ne soit à tort considérée comme un doublon d'une autre entité
-            # qui la contient juste par hasard ("HTA" contient "TA").
+            similarity = SequenceMatcher(None, existing_norm, new_norm, autojunk=False).ratio()
             is_substring = (
                 len(existing_norm) >= 6 and len(new_norm) >= 6
                 and (existing_norm in new_norm or new_norm in existing_norm)
             )
 
             if similarity >= FUZZY_DEDUP_THRESHOLD or is_substring:
-                if len(new_value) > len(existing_value):
+                if self._is_better_entry(new_value, existing_value, category):
                     existing_list[i] = new_value
                 return
 
         existing_list.append(new_value)
 
+    def _is_better_entry(self, candidate, existing, category: str) -> bool:
+        """Détermine si `candidate` doit remplacer `existing` lors d'une fusion."""
+        if isinstance(candidate, str) or isinstance(existing, str):
+            return len(self._display_text(candidate)) > len(self._display_text(existing))
+
+        date_field = OBJECT_CATEGORIES.get(category) or ("date" if category == CONSTANTES_KEY else None)
+        if date_field:
+            candidate_has_date = bool(candidate.get(date_field))
+            existing_has_date = bool(existing.get(date_field))
+            if candidate_has_date and not existing_has_date:
+                return True
+            if existing_has_date and not candidate_has_date:
+                return False
+
+        return len(self._display_text(candidate)) > len(self._display_text(existing))
+
 
 # ----------------------------------------------------------------------
-# Exemple d'utilisation (à intégrer dans test_pipeline.py)
+# Exemple d'utilisation
 # ----------------------------------------------------------------------
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
@@ -771,12 +1035,11 @@ if __name__ == "__main__":
     extractor = NERExtractor()
 
     sample_text = """
-    Patient : Jean DUPONT, né le 12/03/1965
-    Antécédents : HTA, diabète type 2 depuis 2010
-    Allergies : pénicilline
-    Traitement actuel : Metformine 1000mg 2x/jour, Amlodipine 5mg 1x/jour
-    Consultation du 15/06/2026 pour renouvellement ordonnance.
+    Mme BANANE Sophie, née le 17/09/1962. Poids : 65 kg. TA : 13/7.
+    Antécédents : ménopause subatrophique depuis octobre 2009.
+    Cure de kyste sous-urétral en juillet 2008.
+    Traitement actuel : Rivotril 20 gouttes le soir au long cours.
     """
 
-    result = extractor.extract(sample_text, document_type="ordonnance")
+    result = extractor.extract(sample_text, document_type="courrier")
     print(json.dumps(result, indent=2, ensure_ascii=False))

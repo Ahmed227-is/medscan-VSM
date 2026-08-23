@@ -12,6 +12,7 @@ from src.pipeline_tracker import PipelineTracker
 from src.document_classifier import DocumentClassifier
 from src.llm_fallback import LLMFallback
 from src.ner_extractor import NERExtractor
+from src.vsm_generator import VSMGenerator
 
 
 def test_pipeline(file_path: str):
@@ -152,7 +153,7 @@ def test_pipeline(file_path: str):
                 tracker.fail_step("classification", str(e))
                 raise
 
-            # ÉTAPE 4 : NER médical (Qwen2.5 texte, via Ollama)
+            # ÉTAPE 4 : NER médical (Qwen2.5 texte, via Ollama) — schéma v3
             print(f"\n[4] Extraction entités médicales (NER)...")
             tracker.start_step("ner")
             try:
@@ -166,20 +167,24 @@ def test_pipeline(file_path: str):
                     "pathologies": len(ner_result['pathologies_actives']),
                     "traitements": len(ner_result['traitements_en_cours']),
                     "allergies": len(ner_result['allergies_intolerances']),
-                    "constantes": len(ner_result['constantes_biologiques']),
+                    "constantes": len(ner_result['constantes']),
+                    "historique_actes": len(ner_result['historique_actes']),
                     "dates": len(ner_result['dates_importantes'])
                 })
-                print(f"    ✓ Pathologies      : {ner_result['pathologies_actives']}")
-                print(f"    ✓ Traitements      : {ner_result['traitements_en_cours']}")
-                print(f"    ✓ Allergies        : {ner_result['allergies_intolerances']}")
-                print(f"    ✓ Constantes       : {ner_result['constantes_biologiques']}")
-                print(f"    ✓ Antéc. chir      : {ner_result['antecedents_chirurgicaux']}")
-                print(f"    ✓ Facteurs risque  : {ner_result['facteurs_risque']}")
-                print(f"    ✓ Vaccinations     : {ner_result['vaccinations']}")
-                print(f"    ✓ Examens          : {ner_result['examens_bilans']}")
-                print(f"    ✓ Dates            : {ner_result['dates_importantes']}")
-                print(f"    ✓ Antéc. familiaux : {ner_result['antecedents_familiaux']}")
-                print(f"    ✓ Points attention : {ner_result['points_attention']}")
+                print(f"    ✓ Pathologies       : {ner_result['pathologies_actives']}")
+                print(f"    ✓ Traitements       : {ner_result['traitements_en_cours']}")
+                print(f"    ✓ Allergies         : {ner_result['allergies_intolerances']}")
+                print(f"    ✓ Effets indésir.   : {ner_result['effets_indesirables_medicaments']}")
+                print(f"    ✓ Constantes        : {ner_result['constantes']}")
+                print(f"    ✓ Historique actes  : {ner_result['historique_actes']}")
+                print(f"    ✓ Dispositifs méd.  : {ner_result['dispositifs_medicaux']}")
+                print(f"    ✓ Antéc. médicaux   : {ner_result['antecedents_medicaux']}")
+                print(f"    ✓ Antéc. familiaux  : {ner_result['antecedents_familiaux']}")
+                print(f"    ✓ Facteurs risque   : {ner_result['facteurs_risque']}")
+                print(f"    ✓ Vaccinations      : {ner_result['vaccinations']}")
+                print(f"    ✓ Examens           : {ner_result['examens_bilans']}")
+                print(f"    ✓ Points attention  : {ner_result['points_attention']}")
+                print(f"    ✓ Dates             : {ner_result['dates_importantes']}")
                 if ner_result['identite_patient']['nom_complet']:
                     print(f"    ✓ Identité détectée : {ner_result['identite_patient']}")
             except Exception as e:
@@ -222,6 +227,13 @@ def test_pipeline(file_path: str):
             [p['ner']['identite_patient'] for p in pages_results]
         )
 
+        # Génération du VSM structuré (schéma v3 : objets {texte, date},
+        # placeholders honnêtes sur les sections obligatoires vides).
+        vsm_generator = VSMGenerator()
+        ner_result_complet = {**merged_ner, "identite_patient": merged_identity}
+        vsm = vsm_generator.generate(ner_result_complet)
+        vsm_markdown = vsm_generator.render_markdown(vsm)
+
         # Statistiques globales
         ocr_methods = [p['ocr_method'] for p in pages_results]
         zeroshot_used = sum(
@@ -248,15 +260,21 @@ def test_pipeline(file_path: str):
             },
             "ner_global": merged_ner,
             "identite_patient": merged_identity,
+            "vsm": vsm,
             "pages": pages_results,
             "full_text": full_document_text,
             "tracking": tracker.get_summary()
         }
 
-        # Sauvegarde JSON
+        # Sauvegarde JSON (donnée brute complète, pour audit/debug)
         output_json = Path("data/processed") / f"{Path(file_path).stem}_ocr_result.json"
         with open(output_json, 'w', encoding='utf-8') as f:
             json.dump(final_result, f, ensure_ascii=False, indent=2, default=str)
+
+        # Sauvegarde du VSM final (document lisible, livrable du concours)
+        output_vsm = Path("data/processed") / f"{Path(file_path).stem}_VSM.md"
+        with open(output_vsm, 'w', encoding='utf-8') as f:
+            f.write(vsm_markdown)
 
         # Affichage résumé final
         print(f"\n{'=' * 60}")
@@ -272,14 +290,11 @@ def test_pipeline(file_path: str):
         print(f"✓ Pages non classifiées   : {final_result['stats']['pages_inconnu']}")
         print(f"✓ Pages révision manuelle : {final_result['stats']['pages_manual_review']}")
         print(f"\n{'=' * 60}")
-        print(f"NER GLOBAL DU DOCUMENT")
+        print(f"VOLET DE SYNTHÈSE MÉDICALE (VSM)")
         print(f"{'=' * 60}")
-        for key, values in merged_ner.items():
-            if values:
-                print(f"✓ {key.upper()} :")
-                for v in values:
-                    print(f"    → {v}")
-        print(f"\n✓ Résultat sauvegardé : {output_json}")
+        print(vsm_markdown)
+        print(f"\n✓ JSON brut sauvegardé : {output_json}")
+        print(f"✓ VSM sauvegardé       : {output_vsm}")
 
         tracker.complete_pipeline()
         return final_result
