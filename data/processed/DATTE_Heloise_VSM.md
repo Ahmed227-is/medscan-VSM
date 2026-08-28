@@ -1,0 +1,445 @@
+# Volet de Synthèse Médicale
+
+## Identité du patient
+- **Nom** : DATTE Heloise
+- **Date de naissance** : 31/01/1973
+- **Médecin traitant déclaré** : *Non détecté*
+
+## Points d'attention
+- ATTENTION: Nouvelle technique a compter du 13/01/2020. NOUVELLES NORMES; les valeurs peuvent etre affectees d'un biais moyen de +20% par rapport a l'ancienne technique.
+- Attention, a partir du 26/02/19, la créatinine sera rendue principalement en mol/L (la valeur en mg/L est toujours disponible en dessous du résultat en mol/L)
+
+## Allergies et intolérances
+- Allergie à la Pénicilline
+- Notion d'allergie aux graminees
+
+## Effets indésirables liés aux médicaments
+*Aucune information disponible dans les documents analysés.*
+
+## Historique des actes
+- Tumorectomie du sein droit + curage axillaire droit (22/05/2019)
+- Radiothérapie (26/06/2019)
+- Hormonotherapie par TAMOXIFENE
+- Hysteroscopie/exérèse d'un polype endométrial (17/08/2020)
+- NovaSure (17/08/2020)
+- Echographie pelvienne (05/09/2020)
+- Echographie mammaire de contrôle (05/09/2020)
+- Cure de kyste sous-urétral (juillet 2008)
+- Intervention chirurgicale - Operateur : DR - Aide : - Anesthesiste : Sous anesthesie generale (17/08/2020)
+- Introduction de l'hysteroscope (10/08/2020)
+- Curetage de l'endometre (10/08/2020)
+- Thermocoagulation de la cavité utérine (10/08/2020)
+- Verification de l'intégrité de la cavité utérine (10/08/2020)
+- Hysteroscopie Operatoire (25/09/2019)
+- Radiotherapie post opératoire d'un pT1CN0Mo CCI RH+ HER2- 11N (11/07/2019)
+- Radiotherapie - Sequence: 1 Protocole: Site Dose Modalite Du Au Jours Frac. courante passes Sein droit 49,50 Gy RT3D 11/07/2019 16/08/2019 36 22 Lit tumoral 15,00 Gy 8 6 RT3D 19/08/2019 27/08/2019 (19/08/2019)
+- Carcinome canalaire infiltrant du sein droit grade II, RH+, HER 2-
+- Exérèse de la peau en regard de la tumeur du prolongement axillaire
+- Tumorectomie de cette lesion centree sur le harpon allant jusgu'au plan du pectoral
+- Exérèse du fibroadenome centre sur le deuxieme harpon qui correspond a une recoupe interne du carcinome
+- Mise en place de clips dans le lit du carcinome
+- Curage axillaire droit : Ouverture de l'aponevrose delto-pectoro-claviculaire au bistouri electrique
+- Palpation de plusieurs ganglions pathologiques au niveau de la zone sentinelle ainsi qu'au niveau du deuxieme etage de Berg
+- Hemostase au bistouri electrigue et d I'aide de clips
+- Mise en place d'un drain axillaire charniere n10 en aspiration
+- Remodelage glandulaire en position demi-assise au Polysorb 2/0, points separes sous cutanes au Polysorb 2/0, surjet intradermique au Monocryl 3/0
+- Pansement compressif par bandage de corps
+- Tumorectomie curage (30/04/2019)
+- Double tumorectomie du quadrant supero-externe du sein droit (15 ou 22/05/2019)
+- Mallet finger de l'annulaire droit (6 février 2019)
+- Consultation pour suivi de la nephropathie (05.07.2013)
+- allergies_intolerances
+- Ponction biopsie rénale (10/05/2013)
+
+## Traitements en cours
+- Tamoxifene — *aigu*, débuté juillet 2020
+- Hormonotherapie tamoxifène — *long cours*
+- DOLIPRANE 1 cp toutes les 6 heures — *aigu*, débuté 10/08/2020
+- SPASFON 2 cp toutes les 8h — *aigu*, débuté 10/08/2020
+- ACTHÉANE — *aigu*, débuté avril 2020
+- Paracetamol 1 g toutes les 6 heures pendant 15 jours — *long cours*
+- Tramadol 50 mg LP : 1 cp toutes les 6 heures pendant 15 jours — *long cours*
+- Lovenox : 4000 unites : 1 injection par jour pendant 21 jours — *long cours*
+- Soins locaux — *long cours*
+- Arret de travail jusgu'au 24/06/2019 — *long cours*
+- Accord au titre de ALD 30 — *long cours*, débuté 26/03/2019
+- NEoRAL 50 mg 2 fois par jour — *long cours*, débuté 06/01/2017
+- NeoRAL 100 mg par jour — *long cours*, débuté 25/06/15
+- Cortacyn 8 mg — *long cours*, débuté 25/06/15
+- Cortancyl 70 mg/jour — *long cours*
+- Neoral 50 mg 2x/jour — *long cours*
+- Traitement à la même dose — *long cours*, débuté 05.07.2013
+- PREDNISONE — *long cours*, débuté 15/05/2013
+
+## Dispositifs médicaux
+- DMS / Stratos DR
+- Polysorb 2.0
+- Bacteries multi-resistantes
+- Accelerateur lineaire en miroir: Synergy - Elekta - 152414 (Castor)
+- Diplôme Universitaire de Pathologie des Seins-Paris
+
+## Pathologies actives et antécédents
+### Pathologies actives
+- Osteopenie rachidienne et femorale
+- Ménopause
+- Diabète de type 1 ou 2
+- Microalbuminurie
+- Polype intracavitaire de 3 x 1 cm
+- Kyste ovarien droit d'allure fonctionnelle de 29 mm
+- Oedème du sein opéré et du bras (avril 2020)
+- Longue maladie
+- Carcinome canalaire infiltrant du sein droit grade II, RH+, HER 2-
+- antecedents_medicaux
+- Tumeur maligne du sein (26/03/2019)
+- Fibroadenome du sein droit
+- Nephropathie glomerulaire de lesions minimes
+- Mallet Finger du quatrième doigt droit (octobre 2018)
+- Syndrome nephrotique (09/05/2013)
+- Albumémie augmentée à 43 g/l
+- Proteinurie quasi nulle (90 mg/24 h)
+- Nephropathie à lesions glomérulaires
+- Proteinurie associée à une hématurie
+- Hypoalbuminemie importante (< 30 g/l)
+### Antécédents médicaux
+- Neo du sein droit (avril 2019)
+- Glomerunephrite
+- Notion d'allergie aux graminees
+### Antécédents familiaux
+- Hypertension artérielle — père
+
+## Mode de vie et facteurs de risque
+- Antécédents cardiovasculaires
+- Hypertension artérielle
+- Surpoids
+- Tabagisme
+- Sédentarité
+
+---
+## Annexes (informations de référence)
+
+### Constantes (référence)
+- Poids : 55 kgs (31/01/1973)
+- Taille : 166 cm (10/06/2024)
+- IMC : 27.0 (10/06/2024)
+- Tension artérielle : 16600 (10/06/2024)
+- Température : 5 (10/06/2024)
+- Saturation O2 : 100 (10/06/2024)
+- Date de naissance : 31/01/1973 (05/03/2022)
+- Hemoglobine : 13,3 g/dL (07/02/2020)
+- Hematocrite : 40,8 % (07/02/2020)
+- Hematies : 4,75 Tera/L (07/02/2020)
+- V.G.M. : 79 a99 (07/02/2020)
+- T.C.m.H. : 27,0 a33,0 (07/02/2020)
+- C.c.m.h. : 32,6 % (07/02/2020)
+- Giga/L : 28,0 pg (07/02/2020)
+- Leucocytes : 4.0 - 11.0 (07/02/2020)
+- Polynucleares neutrophiles : 48,9 % (07/02/2020)
+- Polynucleares eosinophiles : 2,5 % (07/02/2020)
+- Polynucleares basophiles : 0-0.09 (07/02/2020)
+- Lymphocytes : 0.24-3.6 (07/02/2020)
+- Monocytes : 0.21 - 0.66 (07/02/2020)
+- Plaquettes : 227 Giga/L (07/02/2020)
+- V.p.m. : 9,8 fL (07/02/2020)
+- Valide le : 08/02/20 (07/02/2020)
+- Creatinine urinaire : 8 870 mol/L (08/02/20)
+- IMC : 30.8
+- Tension artérielle : null
+- Fréquence cardiaque : null
+- Température : null
+- Saturation O2 : null
+- Pression artérielle : 132/82 mmHg (21/02/2019)
+- Frequence cardiaque : 94 BPM (21/02/2019)
+- Frequence cardiaque : 100/min (26/07/2017)
+- Creatininemie : 58 mol/l (26/07/2017)
+- Natremie : 141 mmol/l (26/07/2017)
+- Kaliemie : 4,6 mmol/l (26/07/2017)
+- Bicarbonates : 25 mmol/l (26/07/2017)
+- Phosphoremie : 1,02 mmol/l (26/07/2017)
+- Calcemie : 2,35 mmol/l (26/07/2017)
+- Albuminemie : 44 g/l (26/07/2017)
+- Hematurie microscopique : presente (26/07/2017)
+- Proteinurie : 60. mg/24h (26/07/2017)
+- Tension artérielle : 122/75 mmHg (06/01/2017)
+- TA : 120/70 mmHg (13/08/2013)
+- Creatinine : 7,0 mg/L (30/03/13)
+- DFG : 98,66 ml/min (30/03/13)
+
+### Examens et bilans (référence)
+- LDL-cholesterol : N/A, N/A
+- BMD : 0.908 g/cm2
+- T-Score : -0.9
+- Tumorectomie du sein droit : 1,5 x 2 cm
+- Curage axillaire droit : Ie 22/05/2019
+- Echographie pelvienne : 09/04/2024
+- Osteodensitometrie : 09/04/2024
+- Mammographie : Densité mammaire de type D, 08/02/2023
+- Mammographie : Repartition harmonieuse et symétrique de la glande mammaire, 08/02/2023
+- Mammographie : Absence de masse, de distorsion, ou de foyer de microcalcifications suspect, 08/02/2023
+- Mammographie : Absence d'anomalie du revêtement cutané et du prolongement axillaire, 08/02/2023
+- Mammographie : Absence de masse ou de plage hypoechogène attenuante suspecte, 08/02/2023
+- Mammographie : Absence d'anomalie suspecte de la cicatrice du QSE droit, 08/02/2023
+- Mammographie : Absence d'anomalie de la zone retro mamelonnaire, 08/02/2023
+- Mammographie : Absence d'adénomégalie axillaire ou sous claviculaire suspecte, 08/02/2023
+- Mammographie : Sein droit classe BIRADS 2 post thérapeutique, sans anomalie suspecte, 08/02/2023
+- Mammographie : Sein gauche classe BIRADS 2, sans anomalie suspecte, 08/02/2023
+- BMD : 0.869 g/cm²
+- Rachus : 0.9
+- Z-Score : 49
+- Echographie pelvienne du 29.11.2022
+- Hématies : 4,72 t/L
+- Hémoglobine : 13,6 g/100mL
+- Hématocrite : 41,0 %
+- T.C.m.h. : 27,3 pg
+- C.C.M.H. : 32.0-36.5
+- Plaquettes : 150-400
+- Glycémie : 0,79 g/L
+- Hexokinase : 4,39 mmol/L
+- Microalbuminurie/Creatininurie : Non significatif <3 mg/mmol
+- Albuminurie significative >2,5 mg/mmol
+- Echographie mammaire : Aspect échographique globalement stable, sans signe d'évolution
+- Proteinurie : 0,05 g/L
+- Creatinine urinaire : 8 778 mol/24h
+- Creatinine urinaire : 680 a 1470
+- Phosphore : 36 mg/L
+- Ferritine : 145,4 g/dL
+- Capacité totale de saturation en fer de la transferrine : 320,9 g/dL
+- Proteine C réactive : <5
+- 66,0 g/L : 13/03/21
+- 1,82 : 13/03/21
+- Hysteroscopie/exérèse d'un polype endométrial : sans complication
+- Bilan biologique du 30/07/2020 : normal
+- Dosage de la vitamine D
+- Reserve alcaline : 25 mmol/L, 02/02/19
+- Protides totaux : 71 g/L, 03/08/19
+- Calcium : 94,1 mg/L, 03/08/19
+- Phosphore : 36 mmol/L, 03/08/19
+- Proteine C réactive : <1 mg/L, 03/08/19
+- Turbidimetrie : 41 g/L, 03/08/19
+- ASAT (SGOT): 16 uI/L
+- ALAT (SGPT): 7/In 6
+- ECLIA-Roche Diagnostic Cobas e601-Plasma EDTA: 55,0 pg/mL
+- Electrophorese des protéines sériques : Profil qualitatif et quantitatif sans anomalie notable. Absence de pathologie clonale visible
+- Rapport Microalbuminurie / Creatininurie : 0,79 mg/mmol/24
+- Bilan lipidique : correct
+- Bilan hépatique : correct
+- Glycémie : correct
+- Bilan biologique : correct
+- IRM mammaire : nodule du prolongement axillaire de 17 mm qui a été biopsie révélant le carcinome canalaire infiltrant du sein droit grade II Rh (+), Her2 (), avec une adenopathie de 15 mm axillaire droite
+- Fibroadenome du sein droit : 12 mm en 2015, 17 mm en 2016, 17 mm en 2019
+- Carcinome canalaire infiltrant du sein droit : grade II Rh (+), Her2 (-)
+- Adénopathie axillaire droite : 15 mm en 2019
+- Nodule thyroidien droit : hypermétabolique
+- Fibroadenome du sein gauche : 7 mm stable depuis 2013
+- Transaminases ASAT (SGOT): 14 UI/L
+- Gamma-glutamyl transferase: 21 UI/L
+- Phosphatases alcalines: 46 UI/L
+- Antigene CA 15-3: 8,8 uI/mL
+- Antigene Carcino-embryonnaire: <6,5 uI/mL
+- Mammographie : trame fibro-glandulaire dense de type dystrophique, fibro-adenome supero-externe du sein droit de 17 mm
+- Echographie mammaire : fibro-adenome supero-externe du sein droit de 17 mm, plage tissulaire hypoechogene un peu irreguliere de 14 mm de plus grand axe
+- Fibroadenome supero-externe du sein droit : connu avec un affaissement un peu inflammatoire
+- Prise de contraste nodulaire au niveau du prolongement axillaire : 17 mm de plus grand axe
+- Adenopathie axillaire droite fusiforme : environ 15 mm de diamètre à centre graisseux
+- Absence d'adenopathie thoracique interne
+- Absence de rehaussement pathologique au sein gauche
+- Absence d'adenopathie axillaire, thoracique interne pathologique
+- Histologie : Deux carottes mesurant en tout 27 mm. Fixation au formol. La tumeur presente les caracteristiques suivantes : - Type tumoral : carcinome infiltrant de type non specifique. - Grade : * differenciation tubulaire : 3 * anisocaryose : 2 * mitose : 1 (< 1 mitose pour 10 grands champs x 40 ; diametre dc champ : 0.53 mm). - Taille : 90 % des biopsics - Lesions associees : abscnce de CIS - Stroma : fibro clastosique - Embols Iymphatiques : non - Engainements perinerveux : non - Sein non tumoral : normal - Une etude immunohistochimique, realisee sur coupes incluses en paraffine, fixees dans le formol (tcchniquc automatisee BenchMark Ventana) a cte cffectuee sur Ic bloc 2. Les resultats sont les suivants : RESULTATS ANTICORPS RO (Ventana, clone SP1) 95 % des noyaux tumoraux marques+++ (temoins externes 0 et 3+ et internes +) RP (Ventana, clone 1E2) 95% des noyaux tumoraux marques+++ (temoins externes 0 et 3+ et internes +) Cerb-2 (Ventana, clone 4B5) 0 (temoins externes 3+; 2+ et 0) Conclusion : - Carcinome infiltrant de type non specifique de grade 2 de Elston et Ellis (3 + 2 + 1) occupant 90 % des biopsies (OMS 2012). - Recepteurs hormonaux : positifs. - Absence de surexpression du gene Her2. COTATION : ZZQX045 ZZQX162 ADICAP :
+- Hematurie macroscopique : 66 hematies par champs microscopique
+- Hematurie microscopique : 7 leucocytes/mm3
+- Proteinurie : 0,63 g/24 h
+- Creatinémie : 66 mol/l
+- Ionogramme sanguin : normal
+- Urea : 5.15 mmol/l
+- Globules blancs : 6500 g/dl
+- Plaquettes : 246 000/mm3
+- Frottis cervical : satisfaisant, représentatif de la zone de jonction, absence de cellule suspecte
+- Albuminémie : 40 g/l
+- Ionogramme : Normal
+- Natriurie : 142 mmol/l
+- Kalurie : 4,4 mmol/l
+- Réserve alcaline : 25 mmol/l
+- Phosphorémie : 1,18 mmol/l
+- PTH : 26,6 pg/ml
+- Numération formule : Normale
+- Globules blancs : > 6 700/mm3
+- Créatinine : Normal
+- Hématurie microscopique : 89 hematies/mm²
+- Proteinurie : quasi nulle (90 mg/24 h)
+- Calcémie : normale
+- Phosphorémie : normale
+- Albumémie : 35 g/l
+- Taux residuel de ciclosporine : 46 g/l
+- T2H : 146 g/l
+- Proteinurie : 1.89 g/24h
+- Proteinurie : superieure a 4,30g/24h
+- Bilan immunologique normal
+- Pression arterielle : 140-80 mmHg
+- Potassium : 4,1 mmol/L
+- Protides totaux : 53 g/L
+- Albumine sérique : 40,2 g/L
+- Globulines 1 : 6,4 g/L
+- Globulines 2 : 15,8 g/L
+- Y globulines : 10,7 g/L
+- Rapport albumine / globulines : 1,42
+- NT- Pro B.N.P. : 251 pg/mL
+- Examen cyto-bacteriologique des urines : Limpide, Couleur : Jaune, 6,5 Cytologie : Leucocytes ww/ 6 Hematies . 139 /mm3 Absence de cellules epitheliales Absence de cristaux Absence de cylindres
+- Bacteriologie Culture polymicrobienne : Contamination probable. 1000/mL Vallde le 03/04/13
+- Hématies : 4,99 Tera/L
+- C.c.m.h. : 33,7 %
+- Giga/L : 5,69
+- Leucocytes : ..
+- Inf. : 44,5 %
+- Lymphocytes : 1,50 a4,00
+- Monocytes : 0,47 Giga/L
+- Vitesse de sedimentation : 30 mm
+- TAUX DE PROTHROMBINE : 100 %
+- I.N.R. : 1,00
+- Bilirubine totale : 3,1 mg/L
+- Bilirubine conjuguee : 1,1 mg/L
+- Bilirubine libre : 2,0 mg/L
+- Elevéde selective : 140 mmol/L
+- Examen cyto-bacteriologique des urines : aspect lâche, couleur jaune, pH 6,5, absence de cellules epitheliales, absence de cristaux, absence de cylindres
+- Proteines totales : 53 g/l
+- Albumine : 55,3 g/l
+- Alpha 1 : 15,8 g/l
+- Alpha 2 : 0,9 g/l
+- Beta 1 : 5,8 g/l
+- Beta 2 : 3,2 g/l
+- Gamma : 10,7 g/l
+- Frottis monocouche : Prelevement du 15 Mars 2013, JONCTION EXO-ENDOCOL, Prelevement en milieu liquide, Traitement oestro-progestatif, Absence de cellules suspectes
+- Glycemie : 0,82 g/l
+- Sodium : 4,5 mmol/l
+- Creatinine : 8,1 mg/1
+- Triglycerides : VR<2,26 mmol/l
+- Cholesterol total : 2,18 mmol/l
+- Cholesterol LDL : 2,54 mmol/l
+- Cholesterol LDL : 0,78 g/l
+- Frottis gynecologique de dépistage : 5 % de cellules malpighiennes de type superficiel et une majorité de cellules intermédiaires. Flore bactérienne rare. Polynucléaires et histiocytes nombreux, fond hématique. Cellules endocervicales sans anomalie. Réaction inflammatoire marquée. Absence de cellules suspectes.
+
+### Vaccinations (référence)
+*Aucune information disponible dans les documents analysés.*
+
+### Repères chronologiques divers (référence)
+- Echographie pelvienne du 15/04/2025
+- Demande n° 01/03/25
+- Dossier du 30/04/24
+- Valide le 01/03/25 par Dr Page
+- Date de naissance : 31/01/1973
+- Date d'examen : 10/06/2024
+- Date du traitement chirurgical : 22/05/2019
+- Date de consultation : 09/04/2024
+- Date de prescription : 09/04/2024
+- Mammographie : 08/02/2023
+- Examen realise sur un echographe GENERAL ELECTRIC Voluson Expert 22 mis en service le 14/09/2022
+- Dossier du 29/11/2022
+- Dossier du 27/09/2008
+- Prelevement du 14/05/22
+- Edite le 16/05/2022
+- Valeurs de reference Anteriorites 13/03/21
+- Enzymologie Valeurs de reference Anteriorites 30/07/20
+- 18/09/2021
+- 10/03/2022
+- Demande no 15/03/21
+- Demande no 13/03/21 - Le mercredi 17 mars 2021
+- Consultation le 24/09/2020
+- Echographie mammaire de contrôle le 05/09/2020
+- Docteur Medecine generale le 18 septembre 2020
+- Consultation du 07/08/2020
+- Echographie pelvienne du 31/01/1973
+- Recherche de polype et son analyse : 30/07/2020
+- Echographie mammographique du 03/03/2020 : normal
+- SORTIE LE 17/08/2020 POUR SON DOMICILE
+- No: DATTE Heloise 31/01/1973
+- 17/06/2020
+- 07/07/2020
+- Compte-rendu edite le 13/02/2020
+- Prelevement du 07/02/20
+- Demande no 07/02/20
+- Le samedi 8 février 2020
+- Ne(e) le 31/01/1973
+- Valide le 08/02/20
+- Examen effectué le 07/02/2020
+- 19 decembre 2019
+- 06/01/2020
+- 29/03/2020
+- 17/09/2019
+- Hystéroscopie le 25/09/2019
+- Consultation le 07/10/2019
+- SORTIE LE 25/09/2019
+- Certificat remis en main propre le 23/09/2019
+- Ref: Septembre 2019
+- Date initiale de l'arrêt de travail en cours : 22 mai 2019
+- Date de prescription: 11/07/2019
+- Date de fin: 27/08/2019
+- CONSULTATION D'ONCOLOGIE DU 25/06/2019
+- Admission le 22/05/2019
+- Observation medicale le 22/05/2019
+- Intervention le 22/05/2019
+- Arret de travail jusgu'au 24/06/2019
+- Consultation de controle le 06/06/2019
+- Consultation du 24/04/2019
+- Prescrit le 19/04/2019
+- Tumorectomie du 22/05/2019
+- Radiotherapie du 26/06/2019
+- Hormonotherapie tamoxifene du 04/06/2019
+- Tumorectomie curage du 30/04/2019
+- IRM mammaire : 10/04/2019
+- Pet-scanner : 19/04/2019
+- Double tumorectomie du quadrant supero-externe du sein droit : 24/04/2019
+- Curage axillaire : 24/04/2019
+- Indication d'un traitement par chimiothérapie : 24/04/2019
+- RCP du 30/04/2019
+- Dossier du 29/04/2019
+- 15 ou 22/05/2019
+- Prelevement du 06/04/19
+- Prescrit par : DR Enregistre le 06/04/19 a Compte-rendu edite le 06/04/2019
+- Demande n° 06/04/19
+- Valide le 06/04/19
+- Protocole etabli le : 02/04/2019
+- Protocole valable jusqu'au: 26/03/2024
+- date(s) de debut : 26/03/2019
+- Resultat d'examen Etat au 03.04.2019
+- Date 06.03.2019
+- Examen le 15.03.2019
+- Prescrit le 03.04.2019
+- Demande le 22/03/2019
+- Enregistrement le 25/03/2019
+- Cotation ZZQX045 ZZQX162 ADICAP le 26/03/2019
+- Docteur le mercredi 6 fevrier 2019
+- DATTE : 16 janvier 2019
+- Preleve le 13/10/2018
+- Recu le 15/10/2018
+- 17/10/2018
+- Consultation du 13/02/2018
+- 26/07/2017
+- I.R.M. - SCANNER le 03 aout 2017
+- Consultation du 06/01/2017
+- Enregistre le 15/10/2015
+- Docteur (Medecin Remplagant) le 16/10/2015
+- DATTE le 28/06/2014
+- Consultation du 13/11/13
+- Prescrit le 28/11/2013
+- Examen prescrit le 07/05/2013
+- Examen reçu le 10/05/2013
+- Dossier du 13/05/2013
+- Validé le 14/05/2013
+- Donné par téléphone le 13/05/2013
+- Date d'entrée : 09/05/2013
+- Date de sortie : 11/05/2013
+- Ponction biopsie rénale : 10/05/2013
+- PBR : 10/05/2013
+- Le jeudi 4 avril 2013
+- Demande no 30/03/13
+- Enregistre le 30/03/13
+- Dossier du 31/01/1973
+- Dossier: Enregistre le 19 Mars 2013, Edite le 26 Mars 2013
+- 11 mai 2012
+- Examen du 09/03/2012
+- Examen du 24/12/2008
+- Enregistre le 03 Septembre 2007
+- Edite le 04 Septembre 2007
+- ECHOGRAPHIE OBSTETRICALE du 11 fevrier 2006
+- Dossier du 11/02/06
+- Dr Echographie de Mademoiselle DATTE Heloise en date du 11 fevrier 2006
+- Dossier no T.e Dr Examen. du 11/02/2006
+- Meile. Datte heloise Ne(e) 1e 31/01/1973 le 11/02/2006

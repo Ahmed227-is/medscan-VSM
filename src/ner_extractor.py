@@ -175,7 +175,28 @@ EXAM_EQUIPMENT_TERMS = [
     "echograph", "echographie", "gastroscope", "scanner", "irm",
     "mammographi", "radiologi", "radiographi", "osteodensitometri",
     "cystoscope", "coelioscop", "trocart", "fibroscope", "endoscope",
-    "colonoscope", "cathetere de biopsie",
+    "colonoscope", "cathetere de biopsie", "doppler",
+]
+
+# ============================================================
+# FILTRE TRAITEMENTS NON-MÉDICAMENTEUX — post-traitement déterministe
+# Constat run réel : "Arrêt du tabac" classé comme "traitement en
+# cours" — c'est une recommandation de mode de vie, pas un médicament.
+# ============================================================
+NON_MEDICATION_TREATMENT_TERMS = [
+    "arret du tabac", "arret tabac", "sevrage tabagique",
+    "regime alimentaire", "activite physique", "perte de poids",
+    "arret de l'alcool", "arret alcool",
+]
+
+# ============================================================
+# FILTRE ARTEFACTS D'IMPRIMERIE — post-traitement déterministe
+# Constat run réel : "T.S.V.P." (Tournez S.V.P., mention de bas de
+# page) classé comme "constante" avec une fausse valeur mesurée.
+# ============================================================
+CONSTANTE_ARTIFACT_TERMS = [
+    "t.s.v.p", "tsvp", "tournez svp", "tournez s.v.p",
+    "suite page", "voir page suivante",
 ]
 
 # ============================================================
@@ -234,6 +255,9 @@ DÉFINITIONS :
   le membre concerné si mentionné, sinon null.
 - historique_actes : actes chirurgicaux/diagnostic invasif/thérapeutiques RÉALISÉS
   (ex: appendicectomie, exérèse de kyste, pose de plaque...). {"texte", "date"}
+  ATTENTION : un DIAGNOSTIC (ex: "infection urinaire", "dysurie") n'est PAS un acte,
+  même s'il est mentionné dans le même contexte — ça va dans pathologies_actives ou
+  antecedents_medicaux, jamais dans historique_actes.
 - allergies_intolerances : réaction NON PRÉVISIBLE, non liée à la dose. {"texte", "date_debut"}
 - effets_indesirables_medicaments : effet secondaire PRÉVISIBLE, dose-dépendant, d'un
   médicament précis (différent d'une allergie). {"texte", "medicament", "date_debut"}
@@ -429,7 +453,8 @@ class NERExtractor:
     # ------------------------------------------------------------------
     # Point d'entrée principal
     # ------------------------------------------------------------------
-    def extract(self, text: str, document_type: str = "inconnu") -> dict:
+    def extract(self, text: str, document_type: str = "inconnu",
+                page_number: Optional[int] = None) -> dict:
         if not text or len(text.strip()) < 10:
             return self._empty_result("Texte vide ou trop court")
 
@@ -440,7 +465,36 @@ class NERExtractor:
         result["document_type"] = document_type
         result["extraction_method"] = "qwen_only"
         result["identite_patient"] = self.extract_patient_identity(text)
+
+        self._attach_page_source(result, page_number)
         return result
+
+    def _attach_page_source(self, result: dict, page_number: Optional[int]) -> None:
+        """
+        Traçabilité (v3.6) : chaque entité garde en mémoire de quelle
+        page du PDF original elle provient — indispensable pour qu'un
+        médecin qui ne connaît pas le patient puisse vérifier une ligne
+        du VSM en 2 secondes plutôt que de relire tout le dossier (voir
+        discussion projet). Uniformise au passage toutes les catégories
+        en objets — les catégories "string" (examens_bilans, dates...)
+        deviennent {"texte": str, "pages_sources": [...]}.
+
+        Qwen n'est jamais informé de la page — c'est une info que SEUL
+        le code appelant (test_pipeline.py, qui boucle sur les pages)
+        connaît ; on l'attache ici en pur post-traitement.
+        """
+        sources = [page_number] if page_number is not None else []
+
+        for key in OUTPUT_SCHEMA_KEYS:
+            entries = result.get(key, [])
+            wrapped = []
+            for entry in entries:
+                if isinstance(entry, dict):
+                    entry["pages_sources"] = list(sources)
+                    wrapped.append(entry)
+                else:
+                    wrapped.append({"texte": str(entry), "pages_sources": list(sources)})
+            result[key] = wrapped
 
     def _empty_result(self, reason: str) -> dict:
         result = {key: [] for key in OUTPUT_SCHEMA_KEYS}
@@ -630,6 +684,15 @@ class NERExtractor:
 
             if key == "dates_importantes":
                 entries = [e for e in entries if self._contains_valid_date(e)]
+                # Fix v3.7 : une "date importante" est une mention courte
+                # (ex: "Enregistré le 09/10/2014"), jamais un paragraphe
+                # entier. Constaté sur run réel : Qwen a recopié le contenu
+                # intégral d'une page (plusieurs centaines de mots) parce
+                # qu'une date y était mentionnée quelque part — le filtre
+                # de validation ci-dessus ne vérifie que la PRÉSENCE d'une
+                # date, pas que l'entrée EST une date. Même plafond que
+                # points_attention (200 caractères), même raison.
+                entries = [e for e in entries if len(e) <= 200]
             if key == "points_attention":
                 entries = [e for e in entries if self._contains_alert_marker(e)]
                 entries = [e for e in entries if len(e) <= 200]
@@ -684,6 +747,9 @@ class NERExtractor:
             if not entry["texte"] or self._is_negation(entry["texte"]):
                 continue
 
+            if category == "traitements_en_cours" and self._is_non_medication_treatment(entry["texte"]):
+                continue
+
             clean.append(entry)
 
         return clean
@@ -699,6 +765,8 @@ class NERExtractor:
             signe_vital = str(item.get("signe_vital", "")).strip()
             valeur = str(item.get("valeur", "")).strip()
             if not signe_vital or not valeur:
+                continue
+            if self._is_print_artifact(signe_vital):
                 continue
             date = self._validate_date_field(item.get("date"))
             clean.append({"signe_vital": signe_vital, "valeur": valeur, "date": date})
@@ -798,6 +866,24 @@ class NERExtractor:
                       .replace('à', 'a').replace('ù', 'u'))
         return any(term in normalized for term in EXAM_EQUIPMENT_TERMS)
 
+    def _is_non_medication_treatment(self, value: str) -> bool:
+        """Détecte une recommandation de mode de vie classée à tort comme
+        traitement médicamenteux (ex: "Arrêt du tabac")."""
+        normalized = value.lower()
+        normalized = (normalized
+                      .replace('é', 'e').replace('è', 'e').replace('ê', 'e')
+                      .replace('à', 'a').replace('ù', 'u'))
+        return any(term in normalized for term in NON_MEDICATION_TREATMENT_TERMS)
+
+    def _is_print_artifact(self, value: str) -> bool:
+        """Détecte une mention d'imprimerie/mise en page (ex: "T.S.V.P.")
+        classée à tort comme une constante médicale mesurée."""
+        normalized = value.lower()
+        normalized = (normalized
+                      .replace('é', 'e').replace('è', 'e').replace('ê', 'e')
+                      .replace('à', 'a').replace('ù', 'u'))
+        return any(term in normalized for term in CONSTANTE_ARTIFACT_TERMS)
+
     # ------------------------------------------------------------------
     # Helper générique : texte affichable d'une entrée, quelle que soit
     # sa forme (objet avec "texte", objet "constante" avec signe_vital/
@@ -861,7 +947,8 @@ class NERExtractor:
         kept_attentions = []
 
         for attention in attentions:
-            attention_name = self._leading_word(attention.split(':')[0])
+            attention_text = self._display_text(attention)
+            attention_name = self._leading_word(attention_text.split(':')[0])
             has_conflict = (
                 attention_name and len(attention_name) >= 4
                 and attention_name in treatment_names
@@ -870,7 +957,7 @@ class NERExtractor:
                 logger.warning(
                     f"Contradiction détectée entre points_attention et "
                     f"traitements_en_cours pour \"{attention_name}\" : "
-                    f"\"{attention}\" retiré des alertes (traitement jugé plus "
+                    f"\"{attention_text}\" retiré des alertes (traitement jugé plus "
                     f"fiable, répété dans le dossier). Révision manuelle recommandée."
                 )
             else:
@@ -953,7 +1040,7 @@ class NERExtractor:
             if tracker:
                 tracker.update(step="ner_extraction", page=i, total=len(pages))
 
-            page_result = self.extract(page_text, document_type=document_type)
+            page_result = self.extract(page_text, document_type=document_type, page_number=i)
             per_page_results.append(page_result)
 
             nb_entities = sum(len(page_result[k]) for k in OUTPUT_SCHEMA_KEYS)
@@ -987,7 +1074,10 @@ class NERExtractor:
         En cas de doublon : garde l'entrée avec un texte plus détaillé,
         ET si l'une a une date renseignée et l'autre non, garde celle
         AVEC la date (ne perd jamais une date au profit d'un texte
-        légèrement plus long sans date).
+        légèrement plus long sans date). Fusionne aussi les
+        "pages_sources" des deux entrées (union) — une entité confirmée
+        sur plusieurs pages garde la trace de TOUTES ses pages sources,
+        pas juste une seule (v3.6, traçabilité).
         """
         new_text = self._display_text(new_value)
         new_norm = new_text.lower().strip()
@@ -1003,11 +1093,20 @@ class NERExtractor:
             )
 
             if similarity >= FUZZY_DEDUP_THRESHOLD or is_substring:
-                if self._is_better_entry(new_value, existing_value, category):
-                    existing_list[i] = new_value
+                winner = new_value if self._is_better_entry(new_value, existing_value, category) else existing_value
+                merged_sources = self._merge_page_sources(new_value, existing_value)
+                if isinstance(winner, dict):
+                    winner["pages_sources"] = merged_sources
+                existing_list[i] = winner
                 return
 
         existing_list.append(new_value)
+
+    def _merge_page_sources(self, a, b) -> list:
+        """Union triée et dédupliquée des pages_sources de deux entrées."""
+        sources_a = a.get("pages_sources", []) if isinstance(a, dict) else []
+        sources_b = b.get("pages_sources", []) if isinstance(b, dict) else []
+        return sorted(set(sources_a) | set(sources_b))
 
     def _is_better_entry(self, candidate, existing, category: str) -> bool:
         """Détermine si `candidate` doit remplacer `existing` lors d'une fusion."""

@@ -32,6 +32,28 @@ CHANGEMENTS vs v2 (voir discussion projet) :
       a préféré le retirer plutôt que de risquer de le faire passer pour
       une section standard aux yeux du jury. Les dates par entité restent
       la seule source de repère temporel dans ce document.
+    - Annotation de récence actif/historique (v3.7 → v3.8, corrigée).
+      Problème identifié : Qwen classe chaque page indépendamment, sans
+      jamais comparer avec les autres pages du dossier — un
+      "Pneumothorax" mentionné comme actif sur une page de 2006 reste en
+      "pathologies_actives" même après fusion avec 113 autres pages plus
+      récentes.
+      v3.7 (ABANDONNÉE) : reclassement AUTOMATIQUE en antécédent au-delà
+      d'un seuil fixe en années. Erreur reconnue : le seuil "correct"
+      dépend du TYPE de pathologie (une infection aiguë et une maladie
+      chronique ne "vieillissent" pas pareil), donc aucun chiffre unique
+      n'est objectif ni généralisable — le seuil initial avait d'ailleurs
+      été calibré pour faire fonctionner un seul exemple, pas validé
+      objectivement.
+      v3.8 (ACTUELLE) : on ne déplace plus rien automatiquement. Chaque
+      pathologie active reçoit juste un fait calculé et neutre —
+      "annees_depuis_mention" — visible en mode audit. Le jugement
+      clinique (est-ce encore actif ?) reste entièrement au médecin qui
+      valide, cohérent avec le principe déjà établi : ce n'est pas à
+      l'outil de trancher une décision clinique. Une entité sans date
+      n'est jamais annotée (aucune preuve). Le calcul n'agit que s'il y a
+      assez de dates dans le dossier pour être fiable (sinon on
+      n'annote rien plutôt que de deviner sur un échantillon pauvre).
 
 SCOPE ASSUMÉ (inchangé) : conformité au contenu métier du VSM (bonnes
 rubriques, bon contenu, date rattachée), pas de conformité technique
@@ -42,6 +64,13 @@ import re
 from difflib import SequenceMatcher
 
 FUZZY_DEDUP_THRESHOLD = 0.85
+
+MIN_DATES_FOR_RECLASSIFICATION = 5  # échantillon minimum pour faire confiance au calcul
+
+MONTHS_FR = (
+    r'janvier|f[ée]vrier|mars|avril|mai|juin|juillet|'
+    r'ao[uû]t|septembre|octobre|novembre|d[ée]cembre'
+)
 
 # Placeholder honnête pour les sections HAS obligatoires vides — on ne
 # prétend JAMAIS avoir vérifié une absence auprès du patient.
@@ -113,6 +142,8 @@ class VSMGenerator:
     """
 
     def generate(self, ner_result: dict) -> dict:
+        ner_result = self._annotate_recency(ner_result)
+
         vsm = {
             "identite": ner_result.get("identite_patient", {}),
             "sections": [],
@@ -141,6 +172,95 @@ class VSMGenerator:
             vsm["annexes"].append({"titre": annexe["titre"], "contenu": entries, "type": annexe["type"]})
 
         return vsm
+
+    # ------------------------------------------------------------------
+    # Annotation de récence (v3.8) — voir docstring en tête de fichier.
+    # NE DÉPLACE PLUS RIEN AUTOMATIQUEMENT (v3.7 → v3.8) : décider si une
+    # pathologie est encore active dépend du TYPE de pathologie (aiguë vs
+    # chronique), information qu'on n'a pas de façon fiable. Aucun seuil
+    # unique en années n'est objectif ni généralisable à tous les cas.
+    # On se contente d'annoter chaque entrée avec un fait calculable et
+    # neutre — "dernière mention il y a X ans" — et on laisse le médecin
+    # qui valide juger si c'est encore pertinent. Cohérent avec le
+    # principe déjà établi : ce n'est pas à l'outil de prendre une
+    # décision clinique.
+    # ------------------------------------------------------------------
+    def _annotate_recency(self, ner_result: dict) -> dict:
+        reference_year = self._compute_reference_year(ner_result)
+        if reference_year is None:
+            return ner_result  # pas assez de dates fiables pour un calcul significatif
+
+        pathologies = ner_result.get("pathologies_actives", [])
+        for entry in pathologies:
+            if not isinstance(entry, dict):
+                continue
+            entry_year = self._extract_year(entry.get("date_debut"))
+            entry["annees_depuis_mention"] = (reference_year - entry_year) if entry_year is not None else None
+
+        return ner_result
+
+    def _compute_reference_year(self, ner_result: dict) -> int | None:
+        """
+        Année la plus récente trouvée dans le dossier (hors date de
+        naissance), utilisée comme référence pour juger si une
+        pathologie "active" est en réalité ancienne. Ne retourne une
+        valeur que si assez de dates fiables sont disponibles — sinon on
+        préfère ne rien reclasser plutôt que de deviner sur un
+        échantillon trop pauvre.
+        """
+        date_naissance = (ner_result.get("identite_patient") or {}).get("date_naissance")
+        all_date_strings = []
+
+        for entry in ner_result.get("dates_importantes", []):
+            all_date_strings.append(self._display_text(entry))
+
+        for key in ("pathologies_actives", "antecedents_medicaux", "antecedents_familiaux",
+                    "historique_actes", "allergies_intolerances",
+                    "effets_indesirables_medicaments", "traitements_en_cours"):
+            for entry in ner_result.get(key, []):
+                if isinstance(entry, dict):
+                    date_val = entry.get("date_debut") or entry.get("date")
+                    if date_val:
+                        all_date_strings.append(date_val)
+
+        for entry in ner_result.get("constantes", []):
+            if isinstance(entry, dict) and entry.get("date"):
+                all_date_strings.append(entry["date"])
+
+        if date_naissance:
+            all_date_strings = [d for d in all_date_strings if date_naissance not in d]
+
+        all_years = [self._extract_year(d) for d in all_date_strings]
+        all_years = [y for y in all_years if y is not None]
+
+        if len(all_years) < MIN_DATES_FOR_RECLASSIFICATION:
+            return None
+
+        return max(all_years)
+
+    def _extract_year(self, date_str) -> int | None:
+        if not date_str or not isinstance(date_str, str):
+            return None
+
+        match = re.search(r'\b(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{2,4})\b', date_str)
+        if match:
+            return self._normalize_year(match.group(3))
+
+        match = re.search(rf'\b(?:{MONTHS_FR})\s+(\d{{4}})\b', date_str, re.IGNORECASE)
+        if match:
+            return int(match.group(1))
+
+        match = re.search(r'\b(19\d{2}|20\d{2})\b', date_str)
+        if match:
+            return int(match.group(1))
+
+        return None
+
+    def _normalize_year(self, year_str: str) -> int:
+        if len(year_str) == 4:
+            return int(year_str)
+        y = int(year_str)
+        return 1900 + y if y >= 30 else 2000 + y
 
     # ------------------------------------------------------------------
     # Texte affichable d'une entrée, quel que soit son type — même
@@ -190,11 +310,19 @@ class VSMGenerator:
             )
 
             if similarity >= FUZZY_DEDUP_THRESHOLD or is_substring:
-                if self._is_better_entry(new_value, existing_value, type_):
-                    existing_list[i] = new_value
+                winner = new_value if self._is_better_entry(new_value, existing_value, type_) else existing_value
+                if isinstance(winner, dict):
+                    winner["pages_sources"] = self._merge_page_sources(new_value, existing_value)
+                existing_list[i] = winner
                 return
 
         existing_list.append(new_value)
+
+    def _merge_page_sources(self, a, b) -> list:
+        """Union triée et dédupliquée des pages_sources de deux entrées."""
+        sources_a = a.get("pages_sources", []) if isinstance(a, dict) else []
+        sources_b = b.get("pages_sources", []) if isinstance(b, dict) else []
+        return sorted(set(sources_a) | set(sources_b))
 
     def _is_better_entry(self, candidate, existing, type_: str) -> bool:
         if isinstance(candidate, str) or isinstance(existing, str):
@@ -213,7 +341,20 @@ class VSMGenerator:
     # ------------------------------------------------------------------
     # Rendu Markdown lisible
     # ------------------------------------------------------------------
-    def render_markdown(self, vsm: dict) -> str:
+    def render_markdown(self, vsm: dict, show_sources: bool = False) -> str:
+        """
+        show_sources=False (par défaut) : rendu VSM standard, sans
+        référence de page — c'est le document "officiel", à ne pas
+        distinguer visuellement d'un VSM produit par un vrai logiciel
+        médical (les VSM réels n'ont jamais cette info, puisqu'ils
+        partent d'un dossier électronique déjà fiable).
+
+        show_sources=True : mode traçabilité/audit — affiche
+        "[source : page X]" en fin de ligne. Réservé à un usage
+        interne (debug, tests) ou à l'interface interactive
+        (plateforme) qui l'exposera comme fonctionnalité d'innovation,
+        pas dans le document final imprimé/exporté.
+        """
         lines = []
 
         identite = vsm.get("identite", {})
@@ -231,9 +372,9 @@ class VSMGenerator:
             if "sous_sections" in section:
                 for sous in section["sous_sections"]:
                     lines.append(f"### {sous['titre']}")
-                    lines.extend(self._render_entries(sous["contenu"], sous["type"], sous["obligatoire"]))
+                    lines.extend(self._render_entries(sous["contenu"], sous["type"], sous["obligatoire"], show_sources))
             else:
-                lines.extend(self._render_entries(section["contenu"], section["type"], section["obligatoire"]))
+                lines.extend(self._render_entries(section["contenu"], section["type"], section["obligatoire"], show_sources))
 
             lines.append("")
 
@@ -243,40 +384,43 @@ class VSMGenerator:
             lines.append("")
             for annexe in vsm["annexes"]:
                 lines.append(f"### {annexe['titre']}")
-                lines.extend(self._render_entries(annexe["contenu"], annexe["type"], obligatoire=False))
+                lines.extend(self._render_entries(annexe["contenu"], annexe["type"], obligatoire=False, show_sources=show_sources))
                 lines.append("")
 
         return "\n".join(lines)
 
-    def _render_entries(self, entries: list, type_: str, obligatoire: bool) -> list:
+    def _render_entries(self, entries: list, type_: str, obligatoire: bool, show_sources: bool = False) -> list:
         if not entries:
             placeholder = PLACEHOLDER_OBLIGATOIRE if obligatoire else PLACEHOLDER_FACULTATIF
             return [f"*{placeholder}*"]
 
         lines = []
         for entry in entries:
-            lines.append(f"- {self._format_entry(entry, type_)}")
+            lines.append(f"- {self._format_entry(entry, type_, show_sources)}")
         return lines
 
-    def _format_entry(self, entry, type_: str) -> str:
+    def _format_entry(self, entry, type_: str, show_sources: bool = False) -> str:
+        source_suffix = self._format_source_suffix(entry) if show_sources else ""
+
         if type_ == "string":
-            return entry
+            texte = entry.get("texte", str(entry)) if isinstance(entry, dict) else entry
+            return f"{texte}{source_suffix}"
 
         if type_ == "constante":
             date_str = f" ({entry['date']})" if entry.get("date") else ""
-            return f"{entry['signe_vital']} : {entry['valeur']}{date_str}"
+            return f"{entry['signe_vital']} : {entry['valeur']}{date_str}{source_suffix}"
 
         if type_ == "traitement":
             texte = entry["texte"]
             type_traitement = "long cours" if entry.get("type") == "long_cours" else "aigu"
             date_str = f", débuté {entry['date_debut']}" if entry.get("date_debut") else ""
-            return f"{texte} — *{type_traitement}*{date_str}"
+            return f"{texte} — *{type_traitement}*{date_str}{source_suffix}"
 
         if type_ == "effet_indesirable":
             texte = entry["texte"]
             med = f" (médicament : {entry['medicament']})" if entry.get("medicament") else ""
             date_str = f" — depuis {entry['date_debut']}" if entry.get("date_debut") else ""
-            return f"{texte}{med}{date_str}"
+            return f"{texte}{med}{date_str}{source_suffix}"
 
         # "objet" générique (pathologies, antécédents, historique_actes, allergies)
         texte = entry.get("texte", str(entry))
@@ -286,7 +430,32 @@ class VSMGenerator:
         parent = entry.get("parent")
         parent_str = f" — {parent}" if parent else ""
 
-        return f"{texte}{parent_str}{date_str}"
+        recency_str = ""
+        if show_sources:
+            annees = entry.get("annees_depuis_mention")
+            if annees is not None and annees > 0:
+                recency_str = f" [dernière mention il y a {annees} an{'s' if annees > 1 else ''} — à réévaluer]"
+
+        return f"{texte}{parent_str}{date_str}{recency_str}{source_suffix}"
+
+    def _format_source_suffix(self, entry) -> str:
+        """
+        Traçabilité (v3.6) : ajoute une référence vers la/les page(s)
+        source(s) en fin de ligne. Une entité confirmée sur plusieurs
+        pages liste toutes ses sources — un vrai signal de fiabilité
+        pour le médecin qui valide (voir discussion projet : la
+        validation se fait par sondage ciblé, pas par relecture
+        intégrale du dossier).
+        """
+        if not isinstance(entry, dict):
+            return ""
+        pages = entry.get("pages_sources") or []
+        if not pages:
+            return ""
+        if len(pages) == 1:
+            return f" [source : page {pages[0]}]"
+        pages_str = ", ".join(str(p) for p in pages)
+        return f" [sources : pages {pages_str}]"
 
 
 # ----------------------------------------------------------------------

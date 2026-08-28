@@ -1,0 +1,5331 @@
+{
+  "document_id": "doc_20260826_233717_aebfd1d3",
+  "source": "data/raw/BANANE_Sophie.pdf",
+  "submitted_at": "2026-08-26T23:37:17.628453",
+  "status": "completed",
+  "steps": {
+    "pdf_handler": {
+      "status": "completed",
+      "started_at": "2026-08-26T23:37:17.628600",
+      "completed_at": "2026-08-26T23:40:55.509527",
+      "duration_seconds": 217.881,
+      "details": {
+        "type": "pdf",
+        "total_pages": 114
+      },
+      "error": null
+    },
+    "preprocessor": {
+      "status": "completed",
+      "started_at": "2026-08-27T06:19:00.836245",
+      "completed_at": "2026-08-27T06:19:02.869776",
+      "duration_seconds": 2.034,
+      "details": {
+        "page": 114,
+        "quality_score": 0.467,
+        "needs_llm_fallback": false
+      },
+      "error": null
+    },
+    "ocr": {
+      "status": "completed",
+      "started_at": "2026-08-27T06:19:02.874152",
+      "completed_at": "2026-08-27T06:19:06.199645",
+      "duration_seconds": 3.325,
+      "details": {
+        "page": 114,
+        "skipped": true,
+        "reason": "Confiance OCR insuffisante (0.495 < 0.6)"
+      },
+      "error": null
+    },
+    "llm_fallback": {
+      "status": "completed",
+      "started_at": "2026-08-27T06:19:06.203866",
+      "completed_at": "2026-08-27T06:21:06.336723",
+      "duration_seconds": 120.132,
+      "details": {
+        "page": 114,
+        "method": "llm_failed",
+        "global_score": 0.0,
+        "words_extracted": 0,
+        "signal": null,
+        "requires_manual_review": false
+      },
+      "error": null
+    },
+    "classification": {
+      "status": "completed",
+      "started_at": "2026-08-27T06:21:06.357622",
+      "completed_at": "2026-08-27T06:21:06.364516",
+      "duration_seconds": 0.007,
+      "details": {
+        "page": 114,
+        "predicted_type": "inconnu",
+        "score": 0.0,
+        "method": "none",
+        "confident": false,
+        "zeroshot_used": false
+      },
+      "error": null
+    },
+    "ner": {
+      "status": "completed",
+      "started_at": "2026-08-27T06:21:06.369652",
+      "completed_at": "2026-08-27T06:21:06.376571",
+      "duration_seconds": 0.007,
+      "details": {
+        "page": 114,
+        "method": "none",
+        "pathologies": 0,
+        "traitements": 0,
+        "allergies": 0,
+        "constantes": 0,
+        "historique_actes": 0,
+        "dates": 0
+      },
+      "error": null
+    },
+    "structuration": {
+      "status": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "duration_seconds": null,
+      "details": {},
+      "error": null
+    },
+    "vsm_generation": {
+      "status": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "duration_seconds": null,
+      "details": {},
+      "error": null
+    }
+  },
+  "audit_trail": [
+    {
+      "timestamp": "2026-08-26T23:37:17.628464",
+      "action": "document_submitted",
+      "details": "Document soumis : data/raw/BANANE_Sophie.pdf"
+    },
+    {
+      "timestamp": "2026-08-26T23:37:17.628604",
+      "action": "pdf_handler_started",
+      "details": "Étape pdf_handler démarrée"
+    },
+    {
+      "timestamp": "2026-08-26T23:40:55.509542",
+      "action": "pdf_handler_completed",
+      "details": "Étape pdf_handler terminée en 217.881s"
+    },
+    {
+      "timestamp": "2026-08-26T23:41:04.480371",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-26T23:41:05.693730",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.213s"
+    },
+    {
+      "timestamp": "2026-08-26T23:41:05.693980",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-26T23:41:07.903304",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 2.209s"
+    },
+    {
+      "timestamp": "2026-08-26T23:41:07.904138",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.911)"
+    },
+    {
+      "timestamp": "2026-08-26T23:41:07.904427",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-26T23:41:13.086545",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 5.182s"
+    },
+    {
+      "timestamp": "2026-08-26T23:41:13.087874",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-26T23:44:29.020301",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 195.932s"
+    },
+    {
+      "timestamp": "2026-08-26T23:44:29.040899",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-26T23:44:30.546874",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.506s"
+    },
+    {
+      "timestamp": "2026-08-26T23:44:30.547208",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-26T23:44:32.495951",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 1.949s"
+    },
+    {
+      "timestamp": "2026-08-26T23:44:32.496278",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.867)"
+    },
+    {
+      "timestamp": "2026-08-26T23:44:32.497547",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-26T23:44:32.498124",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.001s"
+    },
+    {
+      "timestamp": "2026-08-26T23:44:32.498323",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-26T23:47:26.910543",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 174.412s"
+    },
+    {
+      "timestamp": "2026-08-26T23:47:26.911311",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-26T23:47:28.333539",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.422s"
+    },
+    {
+      "timestamp": "2026-08-26T23:47:28.333937",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-26T23:47:31.101181",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 2.767s"
+    },
+    {
+      "timestamp": "2026-08-26T23:47:31.101573",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.953)"
+    },
+    {
+      "timestamp": "2026-08-26T23:47:31.123761",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-26T23:47:31.124389",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.001s"
+    },
+    {
+      "timestamp": "2026-08-26T23:47:31.124601",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-26T23:50:46.421329",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 195.297s"
+    },
+    {
+      "timestamp": "2026-08-26T23:50:46.422091",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-26T23:50:47.659980",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.238s"
+    },
+    {
+      "timestamp": "2026-08-26T23:50:47.660369",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-26T23:50:47.915072",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 0.255s"
+    },
+    {
+      "timestamp": "2026-08-26T23:50:47.915513",
+      "action": "llm_fallback_started",
+      "details": "Étape llm_fallback démarrée"
+    },
+    {
+      "timestamp": "2026-08-26T23:52:48.021496",
+      "action": "llm_fallback_completed",
+      "details": "Étape llm_fallback terminée en 120.106s"
+    },
+    {
+      "timestamp": "2026-08-26T23:52:48.023190",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-26T23:52:48.023671",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.0s"
+    },
+    {
+      "timestamp": "2026-08-26T23:52:48.024363",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-26T23:52:48.024822",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 0.0s"
+    },
+    {
+      "timestamp": "2026-08-26T23:52:48.025959",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-26T23:52:49.681418",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.655s"
+    },
+    {
+      "timestamp": "2026-08-26T23:52:49.682050",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-26T23:52:53.019143",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 3.337s"
+    },
+    {
+      "timestamp": "2026-08-26T23:52:53.019603",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.877)"
+    },
+    {
+      "timestamp": "2026-08-26T23:52:53.020060",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-26T23:53:00.060559",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 7.04s"
+    },
+    {
+      "timestamp": "2026-08-26T23:53:00.062707",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-26T23:56:00.638770",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 180.576s"
+    },
+    {
+      "timestamp": "2026-08-26T23:56:00.641337",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-26T23:56:02.135522",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.494s"
+    },
+    {
+      "timestamp": "2026-08-26T23:56:02.136034",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-26T23:56:04.278239",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 2.142s"
+    },
+    {
+      "timestamp": "2026-08-26T23:56:04.278996",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.966)"
+    },
+    {
+      "timestamp": "2026-08-26T23:56:04.279413",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-26T23:56:08.887871",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 4.608s"
+    },
+    {
+      "timestamp": "2026-08-26T23:56:08.888575",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-26T23:58:57.765600",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 168.877s"
+    },
+    {
+      "timestamp": "2026-08-26T23:58:57.766303",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-26T23:58:59.213571",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.447s"
+    },
+    {
+      "timestamp": "2026-08-26T23:58:59.214092",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-26T23:59:02.665705",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 3.452s"
+    },
+    {
+      "timestamp": "2026-08-26T23:59:02.666201",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.91)"
+    },
+    {
+      "timestamp": "2026-08-26T23:59:02.666619",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-26T23:59:02.667333",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.001s"
+    },
+    {
+      "timestamp": "2026-08-26T23:59:02.667676",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:02:29.349672",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 206.682s"
+    },
+    {
+      "timestamp": "2026-08-27T00:02:29.350913",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:02:30.774811",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.424s"
+    },
+    {
+      "timestamp": "2026-08-27T00:02:30.775360",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:02:33.633358",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 2.858s"
+    },
+    {
+      "timestamp": "2026-08-27T00:02:33.634636",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.956)"
+    },
+    {
+      "timestamp": "2026-08-27T00:02:33.635070",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:02:39.080023",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 5.445s"
+    },
+    {
+      "timestamp": "2026-08-27T00:02:39.082069",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:05:52.575970",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 193.494s"
+    },
+    {
+      "timestamp": "2026-08-27T00:05:52.598259",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:05:53.991103",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.393s"
+    },
+    {
+      "timestamp": "2026-08-27T00:05:53.991688",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:05:54.651664",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 0.66s"
+    },
+    {
+      "timestamp": "2026-08-27T00:05:54.652251",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.605)"
+    },
+    {
+      "timestamp": "2026-08-27T00:05:54.652714",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:05:55.821740",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 1.169s"
+    },
+    {
+      "timestamp": "2026-08-27T00:05:55.822761",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:08:30.693019",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 154.87s"
+    },
+    {
+      "timestamp": "2026-08-27T00:08:30.694167",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:08:32.125824",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.432s"
+    },
+    {
+      "timestamp": "2026-08-27T00:08:32.126417",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:08:33.184980",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 1.059s"
+    },
+    {
+      "timestamp": "2026-08-27T00:08:33.185595",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.911)"
+    },
+    {
+      "timestamp": "2026-08-27T00:08:33.187272",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:08:35.867745",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 2.68s"
+    },
+    {
+      "timestamp": "2026-08-27T00:08:35.869111",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:11:25.454083",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 169.585s"
+    },
+    {
+      "timestamp": "2026-08-27T00:11:25.454933",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:11:26.959913",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.505s"
+    },
+    {
+      "timestamp": "2026-08-27T00:11:26.960596",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:11:30.398081",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 3.437s"
+    },
+    {
+      "timestamp": "2026-08-27T00:11:30.398697",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.988)"
+    },
+    {
+      "timestamp": "2026-08-27T00:11:30.400057",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:11:36.798226",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 6.398s"
+    },
+    {
+      "timestamp": "2026-08-27T00:11:36.799376",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:17:59.949103",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 383.15s"
+    },
+    {
+      "timestamp": "2026-08-27T00:17:59.950109",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:18:01.371297",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.421s"
+    },
+    {
+      "timestamp": "2026-08-27T00:18:01.371998",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:18:05.132851",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 3.761s"
+    },
+    {
+      "timestamp": "2026-08-27T00:18:05.133536",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.972)"
+    },
+    {
+      "timestamp": "2026-08-27T00:18:05.134550",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:18:05.135464",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.001s"
+    },
+    {
+      "timestamp": "2026-08-27T00:18:05.135960",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:21:41.667334",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 216.531s"
+    },
+    {
+      "timestamp": "2026-08-27T00:21:41.668583",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:21:43.053395",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.385s"
+    },
+    {
+      "timestamp": "2026-08-27T00:21:43.054363",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:21:45.830479",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 2.776s"
+    },
+    {
+      "timestamp": "2026-08-27T00:21:45.831138",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.949)"
+    },
+    {
+      "timestamp": "2026-08-27T00:21:45.831729",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:21:45.832783",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.001s"
+    },
+    {
+      "timestamp": "2026-08-27T00:21:45.833279",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:26:59.701815",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 313.869s"
+    },
+    {
+      "timestamp": "2026-08-27T00:26:59.702642",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:27:01.085004",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.382s"
+    },
+    {
+      "timestamp": "2026-08-27T00:27:01.085780",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:27:02.798466",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 1.713s"
+    },
+    {
+      "timestamp": "2026-08-27T00:27:02.799204",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.974)"
+    },
+    {
+      "timestamp": "2026-08-27T00:27:02.800527",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:27:06.849562",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 4.049s"
+    },
+    {
+      "timestamp": "2026-08-27T00:27:06.850603",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:30:04.410775",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 177.56s"
+    },
+    {
+      "timestamp": "2026-08-27T00:30:04.412124",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:30:05.919388",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.507s"
+    },
+    {
+      "timestamp": "2026-08-27T00:30:07.645615",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:30:11.804480",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 4.159s"
+    },
+    {
+      "timestamp": "2026-08-27T00:30:11.805253",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.985)"
+    },
+    {
+      "timestamp": "2026-08-27T00:30:11.805887",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:30:11.806988",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.001s"
+    },
+    {
+      "timestamp": "2026-08-27T00:30:11.807572",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:34:54.252236",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 282.445s"
+    },
+    {
+      "timestamp": "2026-08-27T00:34:54.253682",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:34:55.757992",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.504s"
+    },
+    {
+      "timestamp": "2026-08-27T00:34:55.758835",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:34:58.724402",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 2.966s"
+    },
+    {
+      "timestamp": "2026-08-27T00:34:58.725183",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.979)"
+    },
+    {
+      "timestamp": "2026-08-27T00:34:58.726692",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:34:58.727718",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.001s"
+    },
+    {
+      "timestamp": "2026-08-27T00:34:58.728304",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:38:19.374988",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 200.647s"
+    },
+    {
+      "timestamp": "2026-08-27T00:38:19.376374",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:38:20.762687",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.386s"
+    },
+    {
+      "timestamp": "2026-08-27T00:38:20.763566",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:38:22.805103",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 2.042s"
+    },
+    {
+      "timestamp": "2026-08-27T00:38:22.806235",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.988)"
+    },
+    {
+      "timestamp": "2026-08-27T00:38:22.807217",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:38:22.808762",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.002s"
+    },
+    {
+      "timestamp": "2026-08-27T00:38:22.809669",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:41:15.708750",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 172.899s"
+    },
+    {
+      "timestamp": "2026-08-27T00:41:15.710269",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:41:17.120562",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.41s"
+    },
+    {
+      "timestamp": "2026-08-27T00:41:17.121488",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:41:19.456742",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 2.335s"
+    },
+    {
+      "timestamp": "2026-08-27T00:41:19.457635",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.973)"
+    },
+    {
+      "timestamp": "2026-08-27T00:41:19.459188",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:41:19.460266",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.001s"
+    },
+    {
+      "timestamp": "2026-08-27T00:41:19.460997",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:44:40.263424",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 200.802s"
+    },
+    {
+      "timestamp": "2026-08-27T00:44:40.265068",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:44:41.702307",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.437s"
+    },
+    {
+      "timestamp": "2026-08-27T00:44:41.703185",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:44:44.501404",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 2.798s"
+    },
+    {
+      "timestamp": "2026-08-27T00:44:44.502264",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.984)"
+    },
+    {
+      "timestamp": "2026-08-27T00:44:44.524644",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:44:50.876101",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 6.351s"
+    },
+    {
+      "timestamp": "2026-08-27T00:44:50.877375",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:48:20.592692",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 209.715s"
+    },
+    {
+      "timestamp": "2026-08-27T00:48:20.593870",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:48:22.072129",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.478s"
+    },
+    {
+      "timestamp": "2026-08-27T00:48:22.073077",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:48:25.350670",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 3.278s"
+    },
+    {
+      "timestamp": "2026-08-27T00:48:25.351615",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.899)"
+    },
+    {
+      "timestamp": "2026-08-27T00:48:25.373812",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:48:25.374904",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.001s"
+    },
+    {
+      "timestamp": "2026-08-27T00:48:25.375520",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:51:54.101916",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 208.726s"
+    },
+    {
+      "timestamp": "2026-08-27T00:51:54.103599",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:51:55.534924",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.431s"
+    },
+    {
+      "timestamp": "2026-08-27T00:51:55.535942",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:51:57.745343",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 2.209s"
+    },
+    {
+      "timestamp": "2026-08-27T00:51:57.746293",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.985)"
+    },
+    {
+      "timestamp": "2026-08-27T00:51:57.747866",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:52:02.534975",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 4.787s"
+    },
+    {
+      "timestamp": "2026-08-27T00:52:02.536337",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:54:55.255448",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 172.719s"
+    },
+    {
+      "timestamp": "2026-08-27T00:54:55.256747",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:54:56.646130",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.389s"
+    },
+    {
+      "timestamp": "2026-08-27T00:54:56.647099",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:54:58.294669",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 1.648s"
+    },
+    {
+      "timestamp": "2026-08-27T00:54:58.295704",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.993)"
+    },
+    {
+      "timestamp": "2026-08-27T00:54:58.297366",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:55:01.953929",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 3.657s"
+    },
+    {
+      "timestamp": "2026-08-27T00:55:01.955156",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:57:48.910254",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 166.955s"
+    },
+    {
+      "timestamp": "2026-08-27T00:57:48.911973",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:57:50.322602",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.411s"
+    },
+    {
+      "timestamp": "2026-08-27T00:57:50.323848",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:57:52.013412",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 1.69s"
+    },
+    {
+      "timestamp": "2026-08-27T00:57:52.014405",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.978)"
+    },
+    {
+      "timestamp": "2026-08-27T00:57:52.016321",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T00:57:55.792988",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 3.777s"
+    },
+    {
+      "timestamp": "2026-08-27T00:57:55.794457",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:00:48.699111",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 172.905s"
+    },
+    {
+      "timestamp": "2026-08-27T01:00:48.700559",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:00:50.057393",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.357s"
+    },
+    {
+      "timestamp": "2026-08-27T01:00:50.058426",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:00:51.421589",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 1.363s"
+    },
+    {
+      "timestamp": "2026-08-27T01:00:51.422570",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.987)"
+    },
+    {
+      "timestamp": "2026-08-27T01:00:51.424342",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:00:51.425485",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.001s"
+    },
+    {
+      "timestamp": "2026-08-27T01:00:51.426277",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:03:48.507315",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 177.081s"
+    },
+    {
+      "timestamp": "2026-08-27T01:03:48.509169",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:03:49.869812",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.361s"
+    },
+    {
+      "timestamp": "2026-08-27T01:03:49.870833",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:03:50.820791",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 0.95s"
+    },
+    {
+      "timestamp": "2026-08-27T01:03:50.821878",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.982)"
+    },
+    {
+      "timestamp": "2026-08-27T01:03:50.822992",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:03:53.145629",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 2.323s"
+    },
+    {
+      "timestamp": "2026-08-27T01:03:53.146947",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:06:44.666899",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 171.52s"
+    },
+    {
+      "timestamp": "2026-08-27T01:06:44.668231",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:06:45.987192",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.319s"
+    },
+    {
+      "timestamp": "2026-08-27T01:06:45.988332",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:06:46.213252",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 0.225s"
+    },
+    {
+      "timestamp": "2026-08-27T01:06:46.214407",
+      "action": "llm_fallback_started",
+      "details": "Étape llm_fallback démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:08:46.325393",
+      "action": "llm_fallback_completed",
+      "details": "Étape llm_fallback terminée en 120.109s"
+    },
+    {
+      "timestamp": "2026-08-27T01:08:46.339196",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:08:46.340867",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.002s"
+    },
+    {
+      "timestamp": "2026-08-27T01:08:46.342491",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:08:46.343990",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 0.001s"
+    },
+    {
+      "timestamp": "2026-08-27T01:08:46.346599",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:08:48.451596",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 2.105s"
+    },
+    {
+      "timestamp": "2026-08-27T01:08:48.453731",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:08:52.739584",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 4.286s"
+    },
+    {
+      "timestamp": "2026-08-27T01:08:52.741551",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.989)"
+    },
+    {
+      "timestamp": "2026-08-27T01:08:52.743173",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:08:52.745343",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.002s"
+    },
+    {
+      "timestamp": "2026-08-27T01:08:52.747102",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:11:50.006191",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 177.259s"
+    },
+    {
+      "timestamp": "2026-08-27T01:11:50.008537",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:11:51.414504",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.406s"
+    },
+    {
+      "timestamp": "2026-08-27T01:11:51.415791",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:11:54.349229",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 2.933s"
+    },
+    {
+      "timestamp": "2026-08-27T01:11:54.350205",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.95)"
+    },
+    {
+      "timestamp": "2026-08-27T01:11:54.351128",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:11:54.352346",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.001s"
+    },
+    {
+      "timestamp": "2026-08-27T01:11:54.353206",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:15:26.194167",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 211.841s"
+    },
+    {
+      "timestamp": "2026-08-27T01:15:26.196118",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:15:27.513103",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.317s"
+    },
+    {
+      "timestamp": "2026-08-27T01:15:27.514351",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:15:27.515458",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 0.001s"
+    },
+    {
+      "timestamp": "2026-08-27T01:15:27.516500",
+      "action": "llm_fallback_started",
+      "details": "Étape llm_fallback démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:17:27.642261",
+      "action": "llm_fallback_completed",
+      "details": "Étape llm_fallback terminée en 120.125s"
+    },
+    {
+      "timestamp": "2026-08-27T01:17:27.644769",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:17:27.646418",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.002s"
+    },
+    {
+      "timestamp": "2026-08-27T01:17:27.648067",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:17:27.649668",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 0.002s"
+    },
+    {
+      "timestamp": "2026-08-27T01:17:27.652072",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:17:29.676312",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 2.024s"
+    },
+    {
+      "timestamp": "2026-08-27T01:17:29.678660",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:17:36.466221",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 6.788s"
+    },
+    {
+      "timestamp": "2026-08-27T01:17:36.468088",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.966)"
+    },
+    {
+      "timestamp": "2026-08-27T01:17:36.469674",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:17:36.471875",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.002s"
+    },
+    {
+      "timestamp": "2026-08-27T01:17:36.473464",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:21:30.328409",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 233.855s"
+    },
+    {
+      "timestamp": "2026-08-27T01:21:30.330864",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:21:31.629579",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.299s"
+    },
+    {
+      "timestamp": "2026-08-27T01:21:31.630870",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:21:32.332467",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 0.702s"
+    },
+    {
+      "timestamp": "2026-08-27T01:21:32.333590",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.99)"
+    },
+    {
+      "timestamp": "2026-08-27T01:21:32.334577",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:21:34.530130",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 2.196s"
+    },
+    {
+      "timestamp": "2026-08-27T01:21:34.531858",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:24:27.664746",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 173.133s"
+    },
+    {
+      "timestamp": "2026-08-27T01:24:27.666321",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:24:29.094916",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.429s"
+    },
+    {
+      "timestamp": "2026-08-27T01:24:29.096294",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:24:32.613759",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 3.517s"
+    },
+    {
+      "timestamp": "2026-08-27T01:24:32.615051",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.962)"
+    },
+    {
+      "timestamp": "2026-08-27T01:24:32.616254",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:24:32.617855",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.002s"
+    },
+    {
+      "timestamp": "2026-08-27T01:24:32.618948",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:28:02.777028",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 210.158s"
+    },
+    {
+      "timestamp": "2026-08-27T01:28:02.779353",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:28:04.107533",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.328s"
+    },
+    {
+      "timestamp": "2026-08-27T01:28:04.109066",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:28:04.775693",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 0.667s"
+    },
+    {
+      "timestamp": "2026-08-27T01:28:04.776980",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.981)"
+    },
+    {
+      "timestamp": "2026-08-27T01:28:04.778296",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:28:06.183835",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 1.406s"
+    },
+    {
+      "timestamp": "2026-08-27T01:28:06.185895",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:30:52.025704",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 165.84s"
+    },
+    {
+      "timestamp": "2026-08-27T01:30:52.028252",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:30:53.447818",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.42s"
+    },
+    {
+      "timestamp": "2026-08-27T01:30:53.449182",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:30:55.753925",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 2.305s"
+    },
+    {
+      "timestamp": "2026-08-27T01:30:55.755243",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.987)"
+    },
+    {
+      "timestamp": "2026-08-27T01:30:55.757111",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:31:00.907940",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 5.151s"
+    },
+    {
+      "timestamp": "2026-08-27T01:31:00.909794",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:34:05.463011",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 184.553s"
+    },
+    {
+      "timestamp": "2026-08-27T01:34:05.465383",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:34:07.866883",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 2.401s"
+    },
+    {
+      "timestamp": "2026-08-27T01:34:07.869353",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:34:10.296596",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 2.427s"
+    },
+    {
+      "timestamp": "2026-08-27T01:34:10.297939",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.979)"
+    },
+    {
+      "timestamp": "2026-08-27T01:34:10.299247",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:34:15.533386",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 5.234s"
+    },
+    {
+      "timestamp": "2026-08-27T01:34:15.536354",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:40:17.463722",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 361.927s"
+    },
+    {
+      "timestamp": "2026-08-27T01:40:17.465203",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:40:19.413436",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.948s"
+    },
+    {
+      "timestamp": "2026-08-27T01:40:19.415325",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:40:21.621011",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 2.206s"
+    },
+    {
+      "timestamp": "2026-08-27T01:40:21.622360",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.986)"
+    },
+    {
+      "timestamp": "2026-08-27T01:40:21.623676",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:40:27.698610",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 6.075s"
+    },
+    {
+      "timestamp": "2026-08-27T01:40:27.701097",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:44:32.416379",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 244.715s"
+    },
+    {
+      "timestamp": "2026-08-27T01:44:32.447997",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:44:34.327997",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.88s"
+    },
+    {
+      "timestamp": "2026-08-27T01:44:34.329907",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:44:35.949981",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 1.62s"
+    },
+    {
+      "timestamp": "2026-08-27T01:44:35.951326",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.989)"
+    },
+    {
+      "timestamp": "2026-08-27T01:44:35.952554",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:44:40.142059",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 4.189s"
+    },
+    {
+      "timestamp": "2026-08-27T01:44:40.144641",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:47:53.861120",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 193.716s"
+    },
+    {
+      "timestamp": "2026-08-27T01:47:53.863888",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:47:55.959813",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 2.096s"
+    },
+    {
+      "timestamp": "2026-08-27T01:47:55.961648",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:47:58.804779",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 2.843s"
+    },
+    {
+      "timestamp": "2026-08-27T01:47:58.806151",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.983)"
+    },
+    {
+      "timestamp": "2026-08-27T01:47:58.807431",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:48:06.334533",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 7.527s"
+    },
+    {
+      "timestamp": "2026-08-27T01:48:06.338526",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:51:46.541177",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 220.203s"
+    },
+    {
+      "timestamp": "2026-08-27T01:51:46.544006",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:51:48.648883",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 2.105s"
+    },
+    {
+      "timestamp": "2026-08-27T01:51:48.650702",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:51:51.789761",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 3.139s"
+    },
+    {
+      "timestamp": "2026-08-27T01:51:51.792106",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.965)"
+    },
+    {
+      "timestamp": "2026-08-27T01:51:51.793643",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:51:51.795336",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.002s"
+    },
+    {
+      "timestamp": "2026-08-27T01:51:51.796651",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:55:44.311776",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 232.515s"
+    },
+    {
+      "timestamp": "2026-08-27T01:55:44.315023",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:55:46.268706",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.954s"
+    },
+    {
+      "timestamp": "2026-08-27T01:55:46.271163",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:55:48.000146",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 1.729s"
+    },
+    {
+      "timestamp": "2026-08-27T01:55:48.001574",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.88)"
+    },
+    {
+      "timestamp": "2026-08-27T01:55:48.002893",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:55:48.004437",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.002s"
+    },
+    {
+      "timestamp": "2026-08-27T01:55:48.005647",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:58:57.962023",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 189.956s"
+    },
+    {
+      "timestamp": "2026-08-27T01:58:57.964942",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:58:59.888768",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.924s"
+    },
+    {
+      "timestamp": "2026-08-27T01:58:59.890822",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:59:01.149781",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 1.259s"
+    },
+    {
+      "timestamp": "2026-08-27T01:59:01.151239",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.986)"
+    },
+    {
+      "timestamp": "2026-08-27T01:59:01.152783",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T01:59:05.110603",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 3.958s"
+    },
+    {
+      "timestamp": "2026-08-27T01:59:05.113746",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:02:25.564059",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 200.45s"
+    },
+    {
+      "timestamp": "2026-08-27T02:02:25.568004",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:02:27.558133",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.99s"
+    },
+    {
+      "timestamp": "2026-08-27T02:02:27.560151",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:02:29.463742",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 1.904s"
+    },
+    {
+      "timestamp": "2026-08-27T02:02:29.465406",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.988)"
+    },
+    {
+      "timestamp": "2026-08-27T02:02:29.466776",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:02:29.468432",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.002s"
+    },
+    {
+      "timestamp": "2026-08-27T02:02:29.469708",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:05:44.725743",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 195.256s"
+    },
+    {
+      "timestamp": "2026-08-27T02:05:44.728932",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:05:46.795644",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 2.067s"
+    },
+    {
+      "timestamp": "2026-08-27T02:05:46.797651",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:05:49.479517",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 2.682s"
+    },
+    {
+      "timestamp": "2026-08-27T02:05:49.481007",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.982)"
+    },
+    {
+      "timestamp": "2026-08-27T02:05:49.482372",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:05:49.484112",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.002s"
+    },
+    {
+      "timestamp": "2026-08-27T02:05:49.485457",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:11:42.375112",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 352.89s"
+    },
+    {
+      "timestamp": "2026-08-27T02:11:42.376860",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:11:44.153720",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.777s"
+    },
+    {
+      "timestamp": "2026-08-27T02:11:44.155840",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:11:44.418875",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 0.263s"
+    },
+    {
+      "timestamp": "2026-08-27T02:11:44.421030",
+      "action": "llm_fallback_started",
+      "details": "Étape llm_fallback démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:13:44.556540",
+      "action": "llm_fallback_completed",
+      "details": "Étape llm_fallback terminée en 120.132s"
+    },
+    {
+      "timestamp": "2026-08-27T02:13:44.571918",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:13:44.574672",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.003s"
+    },
+    {
+      "timestamp": "2026-08-27T02:13:44.577501",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:13:44.580149",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 0.003s"
+    },
+    {
+      "timestamp": "2026-08-27T02:13:44.583882",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:13:47.630648",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 3.047s"
+    },
+    {
+      "timestamp": "2026-08-27T02:13:47.634043",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:13:54.719874",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 7.086s"
+    },
+    {
+      "timestamp": "2026-08-27T02:13:54.722080",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.963)"
+    },
+    {
+      "timestamp": "2026-08-27T02:13:54.723929",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:13:54.726400",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.002s"
+    },
+    {
+      "timestamp": "2026-08-27T02:13:54.728469",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:17:52.529643",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 237.801s"
+    },
+    {
+      "timestamp": "2026-08-27T02:17:52.532813",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:17:54.538917",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 2.006s"
+    },
+    {
+      "timestamp": "2026-08-27T02:17:54.541051",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:17:56.611523",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 2.07s"
+    },
+    {
+      "timestamp": "2026-08-27T02:17:56.613055",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.981)"
+    },
+    {
+      "timestamp": "2026-08-27T02:17:56.614786",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:17:56.616635",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.002s"
+    },
+    {
+      "timestamp": "2026-08-27T02:17:56.618374",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:21:39.502805",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 222.884s"
+    },
+    {
+      "timestamp": "2026-08-27T02:21:39.506060",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:21:41.414470",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.908s"
+    },
+    {
+      "timestamp": "2026-08-27T02:21:41.416978",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:21:43.016220",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 1.599s"
+    },
+    {
+      "timestamp": "2026-08-27T02:21:43.017822",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.876)"
+    },
+    {
+      "timestamp": "2026-08-27T02:21:43.019304",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:21:43.021500",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.002s"
+    },
+    {
+      "timestamp": "2026-08-27T02:21:43.022910",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:25:08.908109",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 205.885s"
+    },
+    {
+      "timestamp": "2026-08-27T02:25:08.911684",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:25:10.859203",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.947s"
+    },
+    {
+      "timestamp": "2026-08-27T02:25:10.861685",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:25:12.579526",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 1.718s"
+    },
+    {
+      "timestamp": "2026-08-27T02:25:12.581163",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.987)"
+    },
+    {
+      "timestamp": "2026-08-27T02:25:12.582667",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:25:17.725756",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 5.143s"
+    },
+    {
+      "timestamp": "2026-08-27T02:25:17.729111",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:31:23.454884",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 365.726s"
+    },
+    {
+      "timestamp": "2026-08-27T02:31:23.456775",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:31:25.400885",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.944s"
+    },
+    {
+      "timestamp": "2026-08-27T02:31:25.404715",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:31:26.196243",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 0.792s"
+    },
+    {
+      "timestamp": "2026-08-27T02:31:26.198175",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.744)"
+    },
+    {
+      "timestamp": "2026-08-27T02:31:26.199932",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:31:29.564969",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 3.365s"
+    },
+    {
+      "timestamp": "2026-08-27T02:31:29.568029",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:34:37.288566",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 187.721s"
+    },
+    {
+      "timestamp": "2026-08-27T02:34:37.292204",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:34:39.252040",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.96s"
+    },
+    {
+      "timestamp": "2026-08-27T02:34:39.254324",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:34:39.745172",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 0.491s"
+    },
+    {
+      "timestamp": "2026-08-27T02:34:39.747161",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.788)"
+    },
+    {
+      "timestamp": "2026-08-27T02:34:39.749088",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:34:40.476042",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.727s"
+    },
+    {
+      "timestamp": "2026-08-27T02:34:40.479934",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:37:31.173359",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 170.693s"
+    },
+    {
+      "timestamp": "2026-08-27T02:37:31.175973",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:37:33.189586",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 2.014s"
+    },
+    {
+      "timestamp": "2026-08-27T02:37:33.191942",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:37:35.202729",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 2.011s"
+    },
+    {
+      "timestamp": "2026-08-27T02:37:35.204458",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.876)"
+    },
+    {
+      "timestamp": "2026-08-27T02:37:35.206071",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:37:40.129244",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 4.923s"
+    },
+    {
+      "timestamp": "2026-08-27T02:37:40.132730",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:40:48.359480",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 188.227s"
+    },
+    {
+      "timestamp": "2026-08-27T02:40:48.363046",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:40:50.580848",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 2.217s"
+    },
+    {
+      "timestamp": "2026-08-27T02:40:50.583169",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:40:53.075403",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 2.492s"
+    },
+    {
+      "timestamp": "2026-08-27T02:40:53.077153",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.894)"
+    },
+    {
+      "timestamp": "2026-08-27T02:40:53.079563",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:40:59.450452",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 6.371s"
+    },
+    {
+      "timestamp": "2026-08-27T02:40:59.453708",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:44:17.376730",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 197.923s"
+    },
+    {
+      "timestamp": "2026-08-27T02:44:17.397963",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:44:19.347482",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.95s"
+    },
+    {
+      "timestamp": "2026-08-27T02:44:19.349965",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:44:21.643105",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 2.293s"
+    },
+    {
+      "timestamp": "2026-08-27T02:44:21.644882",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.96)"
+    },
+    {
+      "timestamp": "2026-08-27T02:44:21.647237",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:44:29.114631",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 7.467s"
+    },
+    {
+      "timestamp": "2026-08-27T02:44:29.118130",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:47:54.366543",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 205.248s"
+    },
+    {
+      "timestamp": "2026-08-27T02:47:54.369277",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:47:56.250215",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.881s"
+    },
+    {
+      "timestamp": "2026-08-27T02:47:56.252811",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:47:56.841406",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 0.589s"
+    },
+    {
+      "timestamp": "2026-08-27T02:47:56.843391",
+      "action": "llm_fallback_started",
+      "details": "Étape llm_fallback démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:49:56.953697",
+      "action": "llm_fallback_completed",
+      "details": "Étape llm_fallback terminée en 120.107s"
+    },
+    {
+      "timestamp": "2026-08-27T02:49:56.958233",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:49:56.961478",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.003s"
+    },
+    {
+      "timestamp": "2026-08-27T02:49:56.964821",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:49:56.967993",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 0.003s"
+    },
+    {
+      "timestamp": "2026-08-27T02:49:56.971885",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:49:59.532746",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 2.561s"
+    },
+    {
+      "timestamp": "2026-08-27T02:49:59.536751",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:50:03.937089",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 4.4s"
+    },
+    {
+      "timestamp": "2026-08-27T02:50:03.940710",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.986)"
+    },
+    {
+      "timestamp": "2026-08-27T02:50:03.944046",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:50:13.682382",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 9.737s"
+    },
+    {
+      "timestamp": "2026-08-27T02:50:13.687723",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:53:45.077673",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 211.39s"
+    },
+    {
+      "timestamp": "2026-08-27T02:53:45.082247",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:53:47.173267",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 2.091s"
+    },
+    {
+      "timestamp": "2026-08-27T02:53:47.175836",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:53:49.557974",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 2.382s"
+    },
+    {
+      "timestamp": "2026-08-27T02:53:49.559857",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.984)"
+    },
+    {
+      "timestamp": "2026-08-27T02:53:49.561601",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:53:57.008644",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 7.447s"
+    },
+    {
+      "timestamp": "2026-08-27T02:53:57.012170",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:57:20.355427",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 203.343s"
+    },
+    {
+      "timestamp": "2026-08-27T02:57:20.358091",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:57:22.284932",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.927s"
+    },
+    {
+      "timestamp": "2026-08-27T02:57:22.287432",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:57:24.451904",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 2.164s"
+    },
+    {
+      "timestamp": "2026-08-27T02:57:24.453807",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.954)"
+    },
+    {
+      "timestamp": "2026-08-27T02:57:24.455596",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T02:57:24.457685",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.002s"
+    },
+    {
+      "timestamp": "2026-08-27T02:57:24.459387",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:01:23.941993",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 239.483s"
+    },
+    {
+      "timestamp": "2026-08-27T03:01:23.945819",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:01:25.991673",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 2.046s"
+    },
+    {
+      "timestamp": "2026-08-27T03:01:25.994341",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:01:28.663944",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 2.67s"
+    },
+    {
+      "timestamp": "2026-08-27T03:01:28.665863",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.983)"
+    },
+    {
+      "timestamp": "2026-08-27T03:01:28.667645",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:01:28.669770",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.002s"
+    },
+    {
+      "timestamp": "2026-08-27T03:01:28.671481",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:05:14.157982",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 225.486s"
+    },
+    {
+      "timestamp": "2026-08-27T03:05:14.161751",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:05:16.303735",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 2.142s"
+    },
+    {
+      "timestamp": "2026-08-27T03:05:16.307099",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:05:19.268942",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 2.962s"
+    },
+    {
+      "timestamp": "2026-08-27T03:05:19.270898",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.984)"
+    },
+    {
+      "timestamp": "2026-08-27T03:05:19.272797",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:05:19.274993",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.002s"
+    },
+    {
+      "timestamp": "2026-08-27T03:05:19.276725",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:09:20.176338",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 240.9s"
+    },
+    {
+      "timestamp": "2026-08-27T03:09:20.179348",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:09:22.146366",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.967s"
+    },
+    {
+      "timestamp": "2026-08-27T03:09:22.149067",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:09:23.787940",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 1.639s"
+    },
+    {
+      "timestamp": "2026-08-27T03:09:23.789899",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.948)"
+    },
+    {
+      "timestamp": "2026-08-27T03:09:23.791724",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:09:28.277766",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 4.486s"
+    },
+    {
+      "timestamp": "2026-08-27T03:09:28.282454",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:12:46.970040",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 198.688s"
+    },
+    {
+      "timestamp": "2026-08-27T03:12:46.973060",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:12:49.099376",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 2.126s"
+    },
+    {
+      "timestamp": "2026-08-27T03:12:49.102254",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:12:52.158150",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 3.056s"
+    },
+    {
+      "timestamp": "2026-08-27T03:12:52.160965",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.99)"
+    },
+    {
+      "timestamp": "2026-08-27T03:12:52.162847",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:12:52.165071",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.002s"
+    },
+    {
+      "timestamp": "2026-08-27T03:12:52.166864",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:16:45.908804",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 233.742s"
+    },
+    {
+      "timestamp": "2026-08-27T03:16:45.912723",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:16:47.778199",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.865s"
+    },
+    {
+      "timestamp": "2026-08-27T03:16:47.781217",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:16:49.007037",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 1.226s"
+    },
+    {
+      "timestamp": "2026-08-27T03:16:49.009067",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.994)"
+    },
+    {
+      "timestamp": "2026-08-27T03:16:49.010898",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:16:49.012906",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.002s"
+    },
+    {
+      "timestamp": "2026-08-27T03:16:49.014698",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:19:51.002851",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 181.988s"
+    },
+    {
+      "timestamp": "2026-08-27T03:19:51.006956",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:19:53.106783",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 2.1s"
+    },
+    {
+      "timestamp": "2026-08-27T03:19:53.109509",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:19:56.599110",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 3.49s"
+    },
+    {
+      "timestamp": "2026-08-27T03:19:56.601402",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.983)"
+    },
+    {
+      "timestamp": "2026-08-27T03:19:56.603348",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:19:56.605637",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.002s"
+    },
+    {
+      "timestamp": "2026-08-27T03:19:56.607478",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:25:53.168221",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 356.561s"
+    },
+    {
+      "timestamp": "2026-08-27T03:25:53.170816",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:25:54.950372",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.78s"
+    },
+    {
+      "timestamp": "2026-08-27T03:25:54.953458",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:25:55.524227",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 0.571s"
+    },
+    {
+      "timestamp": "2026-08-27T03:25:55.526731",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.892)"
+    },
+    {
+      "timestamp": "2026-08-27T03:25:55.529370",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:25:56.284027",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.755s"
+    },
+    {
+      "timestamp": "2026-08-27T03:25:56.289015",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:28:48.845962",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 172.557s"
+    },
+    {
+      "timestamp": "2026-08-27T03:28:48.850436",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:28:50.831523",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.981s"
+    },
+    {
+      "timestamp": "2026-08-27T03:28:50.834519",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:28:52.555664",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 1.721s"
+    },
+    {
+      "timestamp": "2026-08-27T03:28:52.557811",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.985)"
+    },
+    {
+      "timestamp": "2026-08-27T03:28:52.559810",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:28:52.562011",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.002s"
+    },
+    {
+      "timestamp": "2026-08-27T03:28:52.563921",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:32:09.994978",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 197.431s"
+    },
+    {
+      "timestamp": "2026-08-27T03:32:09.999269",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:32:11.916215",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.917s"
+    },
+    {
+      "timestamp": "2026-08-27T03:32:11.919100",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:32:11.921919",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 0.003s"
+    },
+    {
+      "timestamp": "2026-08-27T03:32:11.924597",
+      "action": "llm_fallback_started",
+      "details": "Étape llm_fallback démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:34:12.033098",
+      "action": "llm_fallback_completed",
+      "details": "Étape llm_fallback terminée en 120.106s"
+    },
+    {
+      "timestamp": "2026-08-27T03:34:12.038477",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:34:12.041908",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.003s"
+    },
+    {
+      "timestamp": "2026-08-27T03:34:12.045390",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:34:12.048790",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 0.003s"
+    },
+    {
+      "timestamp": "2026-08-27T03:34:12.053040",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:34:14.982761",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 2.928s"
+    },
+    {
+      "timestamp": "2026-08-27T03:34:14.987920",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:34:19.487198",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 4.499s"
+    },
+    {
+      "timestamp": "2026-08-27T03:34:19.491852",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.967)"
+    },
+    {
+      "timestamp": "2026-08-27T03:34:19.495968",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:34:29.539186",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 10.042s"
+    },
+    {
+      "timestamp": "2026-08-27T03:34:29.546152",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:37:52.686725",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 203.141s"
+    },
+    {
+      "timestamp": "2026-08-27T03:37:52.691435",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:37:54.780423",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 2.089s"
+    },
+    {
+      "timestamp": "2026-08-27T03:37:54.783365",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:37:57.885666",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 3.102s"
+    },
+    {
+      "timestamp": "2026-08-27T03:37:57.887849",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.976)"
+    },
+    {
+      "timestamp": "2026-08-27T03:37:57.889992",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:37:57.892633",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.003s"
+    },
+    {
+      "timestamp": "2026-08-27T03:37:57.894618",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:43:54.475860",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 356.581s"
+    },
+    {
+      "timestamp": "2026-08-27T03:43:54.478412",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:43:56.347277",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.869s"
+    },
+    {
+      "timestamp": "2026-08-27T03:43:56.350363",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:43:58.226337",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 1.876s"
+    },
+    {
+      "timestamp": "2026-08-27T03:43:58.228540",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.986)"
+    },
+    {
+      "timestamp": "2026-08-27T03:43:58.230658",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:44:03.716564",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 5.486s"
+    },
+    {
+      "timestamp": "2026-08-27T03:44:03.720952",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:47:24.882276",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 201.161s"
+    },
+    {
+      "timestamp": "2026-08-27T03:47:24.885653",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:47:26.776034",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.89s"
+    },
+    {
+      "timestamp": "2026-08-27T03:47:26.779272",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:47:28.181023",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 1.402s"
+    },
+    {
+      "timestamp": "2026-08-27T03:47:28.183313",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.986)"
+    },
+    {
+      "timestamp": "2026-08-27T03:47:28.186313",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:47:28.188600",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.002s"
+    },
+    {
+      "timestamp": "2026-08-27T03:47:28.190597",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:50:40.376550",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 192.186s"
+    },
+    {
+      "timestamp": "2026-08-27T03:50:40.381102",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:50:42.506834",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 2.126s"
+    },
+    {
+      "timestamp": "2026-08-27T03:50:42.509846",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:50:46.805643",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 4.296s"
+    },
+    {
+      "timestamp": "2026-08-27T03:50:46.807951",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.956)"
+    },
+    {
+      "timestamp": "2026-08-27T03:50:46.810195",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:50:54.563694",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 7.753s"
+    },
+    {
+      "timestamp": "2026-08-27T03:50:54.568633",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:54:34.032811",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 219.464s"
+    },
+    {
+      "timestamp": "2026-08-27T03:54:34.054180",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:54:35.991443",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.937s"
+    },
+    {
+      "timestamp": "2026-08-27T03:54:35.995243",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:54:36.289932",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 0.295s"
+    },
+    {
+      "timestamp": "2026-08-27T03:54:36.292930",
+      "action": "llm_fallback_started",
+      "details": "Étape llm_fallback démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:56:36.405020",
+      "action": "llm_fallback_completed",
+      "details": "Étape llm_fallback terminée en 120.11s"
+    },
+    {
+      "timestamp": "2026-08-27T03:56:36.411439",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:56:36.415564",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.004s"
+    },
+    {
+      "timestamp": "2026-08-27T03:56:36.419632",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:56:36.423684",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 0.004s"
+    },
+    {
+      "timestamp": "2026-08-27T03:56:36.428774",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:56:39.447670",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 3.017s"
+    },
+    {
+      "timestamp": "2026-08-27T03:56:39.453359",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:56:53.688467",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 14.235s"
+    },
+    {
+      "timestamp": "2026-08-27T03:56:53.692742",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.895)"
+    },
+    {
+      "timestamp": "2026-08-27T03:56:53.696828",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T03:57:09.844911",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 16.147s"
+    },
+    {
+      "timestamp": "2026-08-27T03:57:09.852139",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:01:11.951228",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 242.099s"
+    },
+    {
+      "timestamp": "2026-08-27T04:01:11.977311",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:01:13.892679",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.915s"
+    },
+    {
+      "timestamp": "2026-08-27T04:01:13.896185",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:01:13.899531",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 0.003s"
+    },
+    {
+      "timestamp": "2026-08-27T04:01:13.902798",
+      "action": "llm_fallback_started",
+      "details": "Étape llm_fallback démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:03:14.013374",
+      "action": "llm_fallback_completed",
+      "details": "Étape llm_fallback terminée en 120.11s"
+    },
+    {
+      "timestamp": "2026-08-27T04:03:14.018543",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:03:14.022748",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.004s"
+    },
+    {
+      "timestamp": "2026-08-27T04:03:14.026928",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:03:14.030984",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 0.004s"
+    },
+    {
+      "timestamp": "2026-08-27T04:03:14.036018",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:03:16.617862",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 2.582s"
+    },
+    {
+      "timestamp": "2026-08-27T04:03:16.623426",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:03:20.891907",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 4.268s"
+    },
+    {
+      "timestamp": "2026-08-27T04:03:20.896470",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.984)"
+    },
+    {
+      "timestamp": "2026-08-27T04:03:20.900781",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:03:31.202456",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 10.301s"
+    },
+    {
+      "timestamp": "2026-08-27T04:03:31.208275",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:06:53.452869",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 202.245s"
+    },
+    {
+      "timestamp": "2026-08-27T04:06:53.457206",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:06:55.532985",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 2.076s"
+    },
+    {
+      "timestamp": "2026-08-27T04:06:55.536370",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:06:58.013382",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 2.477s"
+    },
+    {
+      "timestamp": "2026-08-27T04:06:58.015898",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.99)"
+    },
+    {
+      "timestamp": "2026-08-27T04:06:58.018339",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:07:05.382583",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 7.364s"
+    },
+    {
+      "timestamp": "2026-08-27T04:07:05.387119",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:10:31.042620",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 205.655s"
+    },
+    {
+      "timestamp": "2026-08-27T04:10:31.046249",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:10:32.997369",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.951s"
+    },
+    {
+      "timestamp": "2026-08-27T04:10:33.000874",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:10:34.815256",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 1.814s"
+    },
+    {
+      "timestamp": "2026-08-27T04:10:34.817985",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.993)"
+    },
+    {
+      "timestamp": "2026-08-27T04:10:34.820423",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:10:39.666969",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 4.847s"
+    },
+    {
+      "timestamp": "2026-08-27T04:10:39.671738",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:13:46.212306",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 186.541s"
+    },
+    {
+      "timestamp": "2026-08-27T04:13:46.218822",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:13:48.207868",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.989s"
+    },
+    {
+      "timestamp": "2026-08-27T04:13:48.211341",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:13:50.413056",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 2.202s"
+    },
+    {
+      "timestamp": "2026-08-27T04:13:50.415569",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.982)"
+    },
+    {
+      "timestamp": "2026-08-27T04:13:50.418018",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:13:50.420621",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.003s"
+    },
+    {
+      "timestamp": "2026-08-27T04:13:50.422891",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:17:18.335022",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 207.912s"
+    },
+    {
+      "timestamp": "2026-08-27T04:17:18.339969",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:17:20.395479",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 2.055s"
+    },
+    {
+      "timestamp": "2026-08-27T04:17:20.398864",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:17:23.310063",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 2.911s"
+    },
+    {
+      "timestamp": "2026-08-27T04:17:23.312660",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.895)"
+    },
+    {
+      "timestamp": "2026-08-27T04:17:23.315108",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:17:23.318072",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.003s"
+    },
+    {
+      "timestamp": "2026-08-27T04:17:23.320385",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:21:24.497603",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 241.177s"
+    },
+    {
+      "timestamp": "2026-08-27T04:21:24.502944",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:21:26.438916",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.936s"
+    },
+    {
+      "timestamp": "2026-08-27T04:21:26.442575",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:21:28.181313",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 1.739s"
+    },
+    {
+      "timestamp": "2026-08-27T04:21:28.183799",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.951)"
+    },
+    {
+      "timestamp": "2026-08-27T04:21:28.187040",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:21:28.189771",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.003s"
+    },
+    {
+      "timestamp": "2026-08-27T04:21:28.192089",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:25:12.823806",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 224.632s"
+    },
+    {
+      "timestamp": "2026-08-27T04:25:12.828910",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:25:14.770319",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.941s"
+    },
+    {
+      "timestamp": "2026-08-27T04:25:14.773919",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:25:15.819126",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 1.045s"
+    },
+    {
+      "timestamp": "2026-08-27T04:25:15.821766",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.853)"
+    },
+    {
+      "timestamp": "2026-08-27T04:25:15.824356",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:25:19.543365",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 3.719s"
+    },
+    {
+      "timestamp": "2026-08-27T04:25:19.549160",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:28:26.228988",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 186.68s"
+    },
+    {
+      "timestamp": "2026-08-27T04:28:26.232856",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:28:28.131874",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.899s"
+    },
+    {
+      "timestamp": "2026-08-27T04:28:28.135695",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:28:28.746300",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 0.611s"
+    },
+    {
+      "timestamp": "2026-08-27T04:28:28.749264",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.808)"
+    },
+    {
+      "timestamp": "2026-08-27T04:28:28.752189",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:28:30.091007",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 1.339s"
+    },
+    {
+      "timestamp": "2026-08-27T04:28:30.096054",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:31:25.425625",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 175.33s"
+    },
+    {
+      "timestamp": "2026-08-27T04:31:25.430808",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:31:27.472787",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 2.042s"
+    },
+    {
+      "timestamp": "2026-08-27T04:31:27.476509",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:31:30.175958",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 2.699s"
+    },
+    {
+      "timestamp": "2026-08-27T04:31:30.179490",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.939)"
+    },
+    {
+      "timestamp": "2026-08-27T04:31:30.181994",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:31:35.494201",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 5.312s"
+    },
+    {
+      "timestamp": "2026-08-27T04:31:35.500364",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:34:50.339599",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 194.839s"
+    },
+    {
+      "timestamp": "2026-08-27T04:34:50.344857",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:34:52.247579",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.903s"
+    },
+    {
+      "timestamp": "2026-08-27T04:34:52.251394",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:34:52.255221",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 0.004s"
+    },
+    {
+      "timestamp": "2026-08-27T04:34:52.258725",
+      "action": "llm_fallback_started",
+      "details": "Étape llm_fallback démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:36:52.370842",
+      "action": "llm_fallback_completed",
+      "details": "Étape llm_fallback terminée en 120.11s"
+    },
+    {
+      "timestamp": "2026-08-27T04:36:52.377092",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:36:52.381846",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.005s"
+    },
+    {
+      "timestamp": "2026-08-27T04:36:52.386914",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:36:52.391501",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 0.005s"
+    },
+    {
+      "timestamp": "2026-08-27T04:36:52.396941",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:36:55.248294",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 2.851s"
+    },
+    {
+      "timestamp": "2026-08-27T04:36:55.255908",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:37:04.233534",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 8.978s"
+    },
+    {
+      "timestamp": "2026-08-27T04:37:04.238036",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.95)"
+    },
+    {
+      "timestamp": "2026-08-27T04:37:04.242362",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:37:17.520844",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 13.278s"
+    },
+    {
+      "timestamp": "2026-08-27T04:37:17.528675",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:40:53.154426",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 215.626s"
+    },
+    {
+      "timestamp": "2026-08-27T04:40:53.181043",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:40:55.086084",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.905s"
+    },
+    {
+      "timestamp": "2026-08-27T04:40:55.090027",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:40:55.512955",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 0.423s"
+    },
+    {
+      "timestamp": "2026-08-27T04:40:55.516311",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.689)"
+    },
+    {
+      "timestamp": "2026-08-27T04:40:55.519523",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:40:56.612851",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 1.093s"
+    },
+    {
+      "timestamp": "2026-08-27T04:40:56.618036",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:43:47.004472",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 170.386s"
+    },
+    {
+      "timestamp": "2026-08-27T04:43:47.009053",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:43:49.133061",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 2.124s"
+    },
+    {
+      "timestamp": "2026-08-27T04:43:49.136895",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:43:51.920618",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 2.784s"
+    },
+    {
+      "timestamp": "2026-08-27T04:43:51.923371",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.883)"
+    },
+    {
+      "timestamp": "2026-08-27T04:43:51.926860",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:43:51.929774",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.003s"
+    },
+    {
+      "timestamp": "2026-08-27T04:43:51.932256",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:47:46.294515",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 234.362s"
+    },
+    {
+      "timestamp": "2026-08-27T04:47:46.300297",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:47:48.249236",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.949s"
+    },
+    {
+      "timestamp": "2026-08-27T04:47:48.253018",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:47:49.723786",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 1.471s"
+    },
+    {
+      "timestamp": "2026-08-27T04:47:49.726512",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.948)"
+    },
+    {
+      "timestamp": "2026-08-27T04:47:49.729097",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:47:49.731919",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.003s"
+    },
+    {
+      "timestamp": "2026-08-27T04:47:49.734473",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:51:19.543619",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 209.809s"
+    },
+    {
+      "timestamp": "2026-08-27T04:51:19.549116",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:51:21.611357",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 2.062s"
+    },
+    {
+      "timestamp": "2026-08-27T04:51:21.615070",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:51:23.891773",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 2.277s"
+    },
+    {
+      "timestamp": "2026-08-27T04:51:23.894617",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.958)"
+    },
+    {
+      "timestamp": "2026-08-27T04:51:23.897273",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:51:23.900152",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.003s"
+    },
+    {
+      "timestamp": "2026-08-27T04:51:23.902675",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:54:39.064600",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 195.162s"
+    },
+    {
+      "timestamp": "2026-08-27T04:54:39.070148",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:54:41.188466",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 2.118s"
+    },
+    {
+      "timestamp": "2026-08-27T04:54:41.192176",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:54:45.135573",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 3.943s"
+    },
+    {
+      "timestamp": "2026-08-27T04:54:45.138411",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.95)"
+    },
+    {
+      "timestamp": "2026-08-27T04:54:45.142134",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:54:51.983522",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 6.841s"
+    },
+    {
+      "timestamp": "2026-08-27T04:54:51.988785",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:58:16.008340",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 204.02s"
+    },
+    {
+      "timestamp": "2026-08-27T04:58:16.013821",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:58:18.085381",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 2.072s"
+    },
+    {
+      "timestamp": "2026-08-27T04:58:18.089163",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:58:19.859206",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 1.77s"
+    },
+    {
+      "timestamp": "2026-08-27T04:58:19.862028",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.668)"
+    },
+    {
+      "timestamp": "2026-08-27T04:58:19.864644",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T04:58:24.159761",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 4.295s"
+    },
+    {
+      "timestamp": "2026-08-27T04:58:24.165506",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:01:42.998468",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 198.833s"
+    },
+    {
+      "timestamp": "2026-08-27T05:01:43.019459",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:01:44.929440",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.91s"
+    },
+    {
+      "timestamp": "2026-08-27T05:01:44.933520",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:01:45.992799",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 1.059s"
+    },
+    {
+      "timestamp": "2026-08-27T05:01:45.995805",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.633)"
+    },
+    {
+      "timestamp": "2026-08-27T05:01:45.998947",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:01:48.737387",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 2.738s"
+    },
+    {
+      "timestamp": "2026-08-27T05:01:48.742938",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:04:47.883474",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 179.141s"
+    },
+    {
+      "timestamp": "2026-08-27T05:04:47.890701",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:04:50.032646",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 2.142s"
+    },
+    {
+      "timestamp": "2026-08-27T05:04:50.036544",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:04:53.509902",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 3.473s"
+    },
+    {
+      "timestamp": "2026-08-27T05:04:53.513444",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.982)"
+    },
+    {
+      "timestamp": "2026-08-27T05:04:53.516233",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:04:53.519352",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.003s"
+    },
+    {
+      "timestamp": "2026-08-27T05:04:53.522006",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:08:52.270510",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 238.748s"
+    },
+    {
+      "timestamp": "2026-08-27T05:08:52.276209",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:08:54.172488",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.896s"
+    },
+    {
+      "timestamp": "2026-08-27T05:08:54.176831",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:08:54.181038",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 0.004s"
+    },
+    {
+      "timestamp": "2026-08-27T05:08:54.185138",
+      "action": "llm_fallback_started",
+      "details": "Étape llm_fallback démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:10:54.303325",
+      "action": "llm_fallback_completed",
+      "details": "Étape llm_fallback terminée en 120.115s"
+    },
+    {
+      "timestamp": "2026-08-27T05:10:54.314245",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:10:54.319684",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.005s"
+    },
+    {
+      "timestamp": "2026-08-27T05:10:54.325058",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:10:54.330311",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 0.005s"
+    },
+    {
+      "timestamp": "2026-08-27T05:10:54.337041",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:10:56.665165",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 2.328s"
+    },
+    {
+      "timestamp": "2026-08-27T05:10:56.671221",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:10:56.676992",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 0.006s"
+    },
+    {
+      "timestamp": "2026-08-27T05:10:56.683118",
+      "action": "llm_fallback_started",
+      "details": "Étape llm_fallback démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:11:02.938535",
+      "action": "llm_fallback_completed",
+      "details": "Étape llm_fallback terminée en 6.253s"
+    },
+    {
+      "timestamp": "2026-08-27T05:11:02.945644",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:11:02.951588",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.006s"
+    },
+    {
+      "timestamp": "2026-08-27T05:11:02.957530",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:11:02.965472",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 0.008s"
+    },
+    {
+      "timestamp": "2026-08-27T05:11:02.975345",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:11:05.452291",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 2.477s"
+    },
+    {
+      "timestamp": "2026-08-27T05:11:05.456408",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:11:10.496244",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 5.04s"
+    },
+    {
+      "timestamp": "2026-08-27T05:11:10.499220",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.931)"
+    },
+    {
+      "timestamp": "2026-08-27T05:11:10.502126",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:11:19.375718",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 8.874s"
+    },
+    {
+      "timestamp": "2026-08-27T05:11:19.382874",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:15:49.838401",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 270.456s"
+    },
+    {
+      "timestamp": "2026-08-27T05:15:49.844064",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:15:51.759839",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.916s"
+    },
+    {
+      "timestamp": "2026-08-27T05:15:51.763998",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:15:52.158778",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 0.395s"
+    },
+    {
+      "timestamp": "2026-08-27T05:15:52.162737",
+      "action": "llm_fallback_started",
+      "details": "Étape llm_fallback démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:17:52.273145",
+      "action": "llm_fallback_completed",
+      "details": "Étape llm_fallback terminée en 120.108s"
+    },
+    {
+      "timestamp": "2026-08-27T05:17:52.279664",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:17:52.284951",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.005s"
+    },
+    {
+      "timestamp": "2026-08-27T05:17:52.290244",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:17:52.295580",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 0.005s"
+    },
+    {
+      "timestamp": "2026-08-27T05:17:52.301934",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:17:55.173116",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 2.87s"
+    },
+    {
+      "timestamp": "2026-08-27T05:17:55.180245",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:18:04.750129",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 9.57s"
+    },
+    {
+      "timestamp": "2026-08-27T05:18:04.755667",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.97)"
+    },
+    {
+      "timestamp": "2026-08-27T05:18:04.761181",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:18:20.224066",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 15.462s"
+    },
+    {
+      "timestamp": "2026-08-27T05:18:20.232970",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:22:22.895972",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 242.663s"
+    },
+    {
+      "timestamp": "2026-08-27T05:22:22.902622",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:22:24.868048",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.965s"
+    },
+    {
+      "timestamp": "2026-08-27T05:22:24.872574",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:22:26.124607",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 1.252s"
+    },
+    {
+      "timestamp": "2026-08-27T05:22:26.127778",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.984)"
+    },
+    {
+      "timestamp": "2026-08-27T05:22:26.130736",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:22:26.133960",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.003s"
+    },
+    {
+      "timestamp": "2026-08-27T05:22:26.136789",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:25:38.433130",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 192.296s"
+    },
+    {
+      "timestamp": "2026-08-27T05:25:38.439225",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:25:40.514586",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 2.075s"
+    },
+    {
+      "timestamp": "2026-08-27T05:25:40.518871",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:25:45.657916",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 5.139s"
+    },
+    {
+      "timestamp": "2026-08-27T05:25:45.661134",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.873)"
+    },
+    {
+      "timestamp": "2026-08-27T05:25:45.664289",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:25:45.668095",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.004s"
+    },
+    {
+      "timestamp": "2026-08-27T05:25:45.670953",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:29:28.896894",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 223.226s"
+    },
+    {
+      "timestamp": "2026-08-27T05:29:28.902817",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:29:30.981280",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 2.078s"
+    },
+    {
+      "timestamp": "2026-08-27T05:29:30.985447",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:29:34.876348",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 3.891s"
+    },
+    {
+      "timestamp": "2026-08-27T05:29:34.879545",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.959)"
+    },
+    {
+      "timestamp": "2026-08-27T05:29:34.882580",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:29:43.612200",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 8.73s"
+    },
+    {
+      "timestamp": "2026-08-27T05:29:43.619269",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:35:36.592261",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 352.973s"
+    },
+    {
+      "timestamp": "2026-08-27T05:35:36.596281",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:35:38.423393",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.827s"
+    },
+    {
+      "timestamp": "2026-08-27T05:35:38.427972",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:35:39.019243",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 0.591s"
+    },
+    {
+      "timestamp": "2026-08-27T05:35:39.023057",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.867)"
+    },
+    {
+      "timestamp": "2026-08-27T05:35:39.026647",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:35:39.954878",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.928s"
+    },
+    {
+      "timestamp": "2026-08-27T05:35:39.961018",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:38:32.827405",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 172.866s"
+    },
+    {
+      "timestamp": "2026-08-27T05:38:32.832108",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:38:34.859898",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 2.028s"
+    },
+    {
+      "timestamp": "2026-08-27T05:38:34.864351",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:38:36.624325",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 1.76s"
+    },
+    {
+      "timestamp": "2026-08-27T05:38:36.627515",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.978)"
+    },
+    {
+      "timestamp": "2026-08-27T05:38:36.630574",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:38:36.633854",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.003s"
+    },
+    {
+      "timestamp": "2026-08-27T05:38:36.636748",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:41:51.318512",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 194.682s"
+    },
+    {
+      "timestamp": "2026-08-27T05:41:51.345783",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:41:53.424754",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 2.079s"
+    },
+    {
+      "timestamp": "2026-08-27T05:41:53.428856",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:41:57.623082",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 4.194s"
+    },
+    {
+      "timestamp": "2026-08-27T05:41:57.626280",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.905)"
+    },
+    {
+      "timestamp": "2026-08-27T05:41:57.630121",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:42:06.011037",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 8.381s"
+    },
+    {
+      "timestamp": "2026-08-27T05:42:06.017057",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:45:48.471175",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 222.454s"
+    },
+    {
+      "timestamp": "2026-08-27T05:45:48.477527",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:45:50.375135",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.898s"
+    },
+    {
+      "timestamp": "2026-08-27T05:45:50.379825",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:45:50.555544",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 0.176s"
+    },
+    {
+      "timestamp": "2026-08-27T05:45:50.560814",
+      "action": "llm_fallback_started",
+      "details": "Étape llm_fallback démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:47:50.673406",
+      "action": "llm_fallback_completed",
+      "details": "Étape llm_fallback terminée en 120.11s"
+    },
+    {
+      "timestamp": "2026-08-27T05:47:50.682142",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:47:50.687885",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.006s"
+    },
+    {
+      "timestamp": "2026-08-27T05:47:50.693712",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:47:50.699489",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 0.006s"
+    },
+    {
+      "timestamp": "2026-08-27T05:47:50.706331",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:47:53.539304",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 2.831s"
+    },
+    {
+      "timestamp": "2026-08-27T05:47:53.547405",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:48:04.111037",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 10.564s"
+    },
+    {
+      "timestamp": "2026-08-27T05:48:04.117860",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.873)"
+    },
+    {
+      "timestamp": "2026-08-27T05:48:04.123567",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:48:04.130105",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.007s"
+    },
+    {
+      "timestamp": "2026-08-27T05:48:04.135983",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:54:04.394159",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 360.258s"
+    },
+    {
+      "timestamp": "2026-08-27T05:54:04.400544",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:54:06.233534",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.833s"
+    },
+    {
+      "timestamp": "2026-08-27T05:54:06.238156",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:54:06.814045",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 0.576s"
+    },
+    {
+      "timestamp": "2026-08-27T05:54:06.817840",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.625)"
+    },
+    {
+      "timestamp": "2026-08-27T05:54:06.822326",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:54:08.487438",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 1.665s"
+    },
+    {
+      "timestamp": "2026-08-27T05:54:08.494319",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:56:59.527811",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 171.033s"
+    },
+    {
+      "timestamp": "2026-08-27T05:56:59.534654",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:57:01.578667",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 2.044s"
+    },
+    {
+      "timestamp": "2026-08-27T05:57:01.583271",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:57:04.410110",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 2.827s"
+    },
+    {
+      "timestamp": "2026-08-27T05:57:04.413482",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.98)"
+    },
+    {
+      "timestamp": "2026-08-27T05:57:04.416627",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T05:57:04.420159",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.004s"
+    },
+    {
+      "timestamp": "2026-08-27T05:57:04.423198",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T06:00:45.051434",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 220.628s"
+    },
+    {
+      "timestamp": "2026-08-27T06:00:45.058385",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T06:00:47.107783",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 2.049s"
+    },
+    {
+      "timestamp": "2026-08-27T06:00:47.112266",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T06:00:49.696382",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 2.584s"
+    },
+    {
+      "timestamp": "2026-08-27T06:00:49.699798",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.974)"
+    },
+    {
+      "timestamp": "2026-08-27T06:00:49.703171",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T06:00:49.706781",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.004s"
+    },
+    {
+      "timestamp": "2026-08-27T06:00:49.709898",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T06:04:04.406936",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 194.697s"
+    },
+    {
+      "timestamp": "2026-08-27T06:04:04.411848",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T06:04:06.371170",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.959s"
+    },
+    {
+      "timestamp": "2026-08-27T06:04:06.375748",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T06:04:08.560436",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 2.185s"
+    },
+    {
+      "timestamp": "2026-08-27T06:04:08.563858",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.912)"
+    },
+    {
+      "timestamp": "2026-08-27T06:04:08.567126",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T06:04:14.035258",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 5.468s"
+    },
+    {
+      "timestamp": "2026-08-27T06:04:14.041623",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T06:07:29.674596",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 195.633s"
+    },
+    {
+      "timestamp": "2026-08-27T06:07:29.681756",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T06:07:31.753851",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 2.072s"
+    },
+    {
+      "timestamp": "2026-08-27T06:07:31.758371",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T06:07:34.004538",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 2.246s"
+    },
+    {
+      "timestamp": "2026-08-27T06:07:34.008031",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.97)"
+    },
+    {
+      "timestamp": "2026-08-27T06:07:34.011458",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T06:07:34.015041",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.004s"
+    },
+    {
+      "timestamp": "2026-08-27T06:07:34.018178",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T06:10:45.011986",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 190.994s"
+    },
+    {
+      "timestamp": "2026-08-27T06:10:45.018720",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T06:10:46.931304",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 1.913s"
+    },
+    {
+      "timestamp": "2026-08-27T06:10:46.936308",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T06:10:48.841677",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 1.905s"
+    },
+    {
+      "timestamp": "2026-08-27T06:10:48.845120",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.915)"
+    },
+    {
+      "timestamp": "2026-08-27T06:10:48.848584",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T06:10:48.852249",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.004s"
+    },
+    {
+      "timestamp": "2026-08-27T06:10:48.855543",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T06:13:53.070396",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 184.215s"
+    },
+    {
+      "timestamp": "2026-08-27T06:13:53.098460",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T06:13:55.159682",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 2.061s"
+    },
+    {
+      "timestamp": "2026-08-27T06:13:55.164463",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T06:13:58.649991",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 3.486s"
+    },
+    {
+      "timestamp": "2026-08-27T06:13:58.653474",
+      "action": "llm_fallback_skipped",
+      "details": "PaddleOCR suffisant (score=0.902)"
+    },
+    {
+      "timestamp": "2026-08-27T06:13:58.657600",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T06:14:06.274756",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 7.617s"
+    },
+    {
+      "timestamp": "2026-08-27T06:14:06.281053",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T06:19:00.831191",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 294.55s"
+    },
+    {
+      "timestamp": "2026-08-27T06:19:00.836253",
+      "action": "preprocessor_started",
+      "details": "Étape preprocessor démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T06:19:02.869799",
+      "action": "preprocessor_completed",
+      "details": "Étape preprocessor terminée en 2.034s"
+    },
+    {
+      "timestamp": "2026-08-27T06:19:02.874159",
+      "action": "ocr_started",
+      "details": "Étape ocr démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T06:19:06.199656",
+      "action": "ocr_completed",
+      "details": "Étape ocr terminée en 3.325s"
+    },
+    {
+      "timestamp": "2026-08-27T06:19:06.203872",
+      "action": "llm_fallback_started",
+      "details": "Étape llm_fallback démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T06:21:06.339085",
+      "action": "llm_fallback_completed",
+      "details": "Étape llm_fallback terminée en 120.132s"
+    },
+    {
+      "timestamp": "2026-08-27T06:21:06.357642",
+      "action": "classification_started",
+      "details": "Étape classification démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T06:21:06.364536",
+      "action": "classification_completed",
+      "details": "Étape classification terminée en 0.007s"
+    },
+    {
+      "timestamp": "2026-08-27T06:21:06.369663",
+      "action": "ner_started",
+      "details": "Étape ner démarrée"
+    },
+    {
+      "timestamp": "2026-08-27T06:21:06.376594",
+      "action": "ner_completed",
+      "details": "Étape ner terminée en 0.007s"
+    },
+    {
+      "timestamp": "2026-08-27T06:21:08.919427",
+      "action": "pipeline_completed",
+      "details": "Pipeline terminé en 24231.291s"
+    }
+  ],
+  "errors": [],
+  "completed_at": "2026-08-27T06:21:08.919409",
+  "total_duration_seconds": 24231.291
+}

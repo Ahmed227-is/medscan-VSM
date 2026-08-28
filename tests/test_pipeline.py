@@ -41,6 +41,29 @@ def test_pipeline(file_path: str):
         classifier = DocumentClassifier(use_zeroshot=True)
         ner = NERExtractor()  # v2 : 100% Qwen texte (Ollama), plus de use_drbert
 
+        # Sauvegarde incrémentale (v3.9) — constat réel : un crash après
+        # 10h39 de traitement, à la toute dernière étape (fusion), a fait
+        # perdre 143 pages déjà correctement traitées, faute de sauvegarde
+        # intermédiaire. Chaque page terminée est maintenant écrite
+        # immédiatement sur disque (append-only, une ligne JSON par page)
+        # — un crash plus tard dans le pipeline ne fait plus perdre le
+        # travail déjà fait.
+        #
+        # PAS de reprise automatique ici volontairement : si le code de
+        # ner_extractor.py a changé depuis un ancien checkpoint (ce qui
+        # arrive souvent en ce moment), une reprise silencieuse réutiliserait
+        # des résultats calculés avec l'ANCIENNE version du code, sans que
+        # tu t'en rendes compte. En cas de crash, utilise
+        # recover_from_checkpoint.py manuellement — action déliberée, pas
+        # automatique.
+        checkpoint_path = Path("data/processed") / f"{Path(file_path).stem}_checkpoint.jsonl"
+        checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+        if checkpoint_path.exists():
+            print(f"\n⚠️  Un checkpoint existe déjà pour ce document : {checkpoint_path}")
+            print("    Ce run va en créer un NOUVEAU (écrasement) — pas de reprise automatique.")
+            print("    Si tu voulais reprendre l'ancien run, utilise recover_from_checkpoint.py à la place.")
+            checkpoint_path.unlink()
+
         pages_results = []
 
         for page_info in tqdm(document['pages'], desc="Traitement pages", unit="page"):
@@ -159,7 +182,8 @@ def test_pipeline(file_path: str):
             try:
                 ner_result = ner.extract(
                     ocr_result['full_text'],
-                    document_type=classification['predicted_type']
+                    document_type=classification['predicted_type'],
+                    page_number=page_num
                 )
                 tracker.complete_step("ner", {
                     "page": page_num,
@@ -191,7 +215,7 @@ def test_pipeline(file_path: str):
                 tracker.fail_step("ner", str(e))
                 raise
 
-            pages_results.append({
+            page_entry = {
                 "page_number": page_num,
                 "page_path": page_path,
                 "quality_score": preprocess_result['quality_score'],
@@ -205,7 +229,14 @@ def test_pipeline(file_path: str):
                 "requires_manual_review": ocr_result.get('requires_manual_review', False),
                 "classification": classification,
                 "ner": ner_result
-            })
+            }
+            pages_results.append(page_entry)
+
+            # Sauvegarde incrémentale : une ligne JSON par page, ajoutée
+            # immédiatement — jamais perdue même si le pipeline crashe plus
+            # tard (ex: à l'étape de fusion, comme vécu récemment).
+            with open(checkpoint_path, 'a', encoding='utf-8') as f:
+                f.write(json.dumps(page_entry, ensure_ascii=False, default=str) + "\n")
 
         # Fusion texte toutes pages
         full_document_text = "\n".join([p['full_text'] for p in pages_results])
@@ -296,13 +327,19 @@ def test_pipeline(file_path: str):
         print(f"\n✓ JSON brut sauvegardé : {output_json}")
         print(f"✓ VSM sauvegardé       : {output_vsm}")
 
+        # Pipeline terminé avec succès : le checkpoint n'est plus utile
+        checkpoint_path.unlink(missing_ok=True)
+
         tracker.complete_pipeline()
         return final_result
 
     except Exception as e:
         tracker.fail_pipeline(str(e))
+        print(f"\n💾 Le travail déjà effectué N'EST PAS PERDU : {checkpoint_path}")
+        print(f"    Utilise recover_from_checkpoint.py pour terminer le traitement")
+        print(f"    sans refaire l'OCR/NER depuis le début.")
         raise
 
 
 if __name__ == "__main__":
-    result = test_pipeline("data/raw/BANANE_Sophie.pdf")
+    result = test_pipeline("data/raw/DATTE_Heloise.pdf")
