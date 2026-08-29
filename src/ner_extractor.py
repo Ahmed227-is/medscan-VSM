@@ -176,6 +176,7 @@ EXAM_EQUIPMENT_TERMS = [
     "mammographi", "radiologi", "radiographi", "osteodensitometri",
     "cystoscope", "coelioscop", "trocart", "fibroscope", "endoscope",
     "colonoscope", "cathetere de biopsie", "doppler",
+    "accelerateur lineaire", "accelerateur",  # v3.9 : materiel de radiotherapie
 ]
 
 # ============================================================
@@ -187,6 +188,8 @@ NON_MEDICATION_TREATMENT_TERMS = [
     "arret du tabac", "arret tabac", "sevrage tabagique",
     "regime alimentaire", "activite physique", "perte de poids",
     "arret de l'alcool", "arret alcool",
+    # v3.9 : statuts administratifs, pas des medicaments
+    "arret de travail", "accord au titre de", "ald 30", "longue maladie",
 ]
 
 # ============================================================
@@ -197,6 +200,44 @@ NON_MEDICATION_TREATMENT_TERMS = [
 CONSTANTE_ARTIFACT_TERMS = [
     "t.s.v.p", "tsvp", "tournez svp", "tournez s.v.p",
     "suite page", "voir page suivante",
+]
+
+# ============================================================
+# FILTRE VALEURS PLACEHOLDER — post-traitement déterministe (v3.9)
+# Constat run réel : "Tension artérielle : null", "LDL-cholesterol : N/A"
+# — Qwen recopie parfois un placeholder JSON/tableau tel quel comme si
+# c'était une vraie valeur mesurée.
+# ============================================================
+PLACEHOLDER_VALUES = {
+    "null", "none", "n/a", "na", "-", "--", "...", "?", "nan", "undefined",
+}
+
+# ============================================================
+# FILTRE CONTENU NON-DISPOSITIF — post-traitement déterministe (v3.9)
+# Constat run réel : "Bactéries multi-résistantes" (résultat de
+# microbiologie) et "Diplôme Universitaire..." (titre du médecin en
+# en-tête) classés à tort comme dispositifs médicaux — ni l'un ni
+# l'autre n'est du matériel d'examen (EXAM_EQUIPMENT_TERMS), c'est un
+# autre type d'erreur : du contenu qui n'a simplement rien à voir avec
+# un dispositif.
+# ============================================================
+NON_DEVICE_TERMS = [
+    "bacterie", "germe", "levure", "resistante", "resistant",
+    "diplome", "universit", "professeur",
+]
+
+# ============================================================
+# FILTRE ALERTES NON-CLINIQUES — post-traitement déterministe (v3.9)
+# Constat run réel : des notices méthodologiques de laboratoire
+# ("Nouvelle technique à compter du..., biais moyen de +20%...")
+# contiennent littéralement "ATTENTION" mais ne concernent pas la
+# patiente — ce sont des mentions génériques sur le changement de
+# méthode de dosage, pas une alerte clinique personnalisée.
+# ============================================================
+LAB_METHODOLOGY_TERMS = [
+    "nouvelle technique", "nouvelles normes", "biais moyen",
+    "sera rendu", "methode de dosage", "changement de methode",
+    "a compter du", "unite de mesure",
 ]
 
 # ============================================================
@@ -696,8 +737,10 @@ class NERExtractor:
             if key == "points_attention":
                 entries = [e for e in entries if self._contains_alert_marker(e)]
                 entries = [e for e in entries if len(e) <= 200]
+                entries = [e for e in entries if not self._is_lab_methodology_notice(e)]
             if key == "dispositifs_medicaux":
                 entries = [e for e in entries if not self._is_exam_equipment(e)]
+                entries = [e for e in entries if not self._is_non_device(e)]
 
             clean[key] = entries
 
@@ -747,6 +790,9 @@ class NERExtractor:
             if not entry["texte"] or self._is_negation(entry["texte"]):
                 continue
 
+            if self._is_schema_key_leak(entry["texte"]) or self._is_placeholder_value(entry["texte"]):
+                continue
+
             if category == "traitements_en_cours" and self._is_non_medication_treatment(entry["texte"]):
                 continue
 
@@ -768,6 +814,8 @@ class NERExtractor:
                 continue
             if self._is_print_artifact(signe_vital):
                 continue
+            if self._is_schema_key_leak(signe_vital) or self._is_placeholder_value(valeur):
+                continue
             date = self._validate_date_field(item.get("date"))
             clean.append({"signe_vital": signe_vital, "valeur": valeur, "date": date})
 
@@ -787,7 +835,7 @@ class NERExtractor:
         result = []
         for v in raw_list:
             text = self._dict_to_readable_string(v) if isinstance(v, dict) else str(v).strip()
-            if text:
+            if text and not self._is_schema_key_leak(text) and not self._is_placeholder_value(text):
                 result.append(text)
         return result
 
@@ -883,6 +931,55 @@ class NERExtractor:
                       .replace('é', 'e').replace('è', 'e').replace('ê', 'e')
                       .replace('à', 'a').replace('ù', 'u'))
         return any(term in normalized for term in CONSTANTE_ARTIFACT_TERMS)
+
+    def _is_schema_key_leak(self, value: str) -> bool:
+        """Détecte un nom de catégorie JSON (ex: "antecedents_medicaux")
+        qui a fuité dans le contenu au lieu d'une vraie entité — hallucination
+        constatée sur un run réel, deux catégories différentes."""
+        normalized = value.strip().lower().replace(" ", "_")
+        return normalized in OUTPUT_SCHEMA_KEYS
+
+    def _is_placeholder_value(self, value: str) -> bool:
+        """
+        Détecte une valeur placeholder ("null", "N/A"...) recopiée telle
+        quelle au lieu d'une vraie mesure ou d'un vrai texte. Gère deux
+        formats : la valeur seule ("null"), et le format "Libellé :
+        valeur" typique des catégories string (ex: "LDL-cholesterol :
+        N/A, N/A") — dans ce cas on vérifie la partie après les ':'.
+        """
+        normalized_full = value.strip().lower().strip(".,;:")
+        if normalized_full in PLACEHOLDER_VALUES:
+            return True
+
+        if ':' in value:
+            last_part = value.rsplit(':', 1)[-1].strip().lower()
+            sub_parts = [s.strip().strip(".,;:") for s in last_part.split(',')]
+            sub_parts = [s for s in sub_parts if s]
+            if sub_parts and all(s in PLACEHOLDER_VALUES for s in sub_parts):
+                return True
+
+        return False
+
+    def _is_non_device(self, value: str) -> bool:
+        """Détecte un contenu qui n'a rien à voir avec un dispositif médical
+        (résultat de microbiologie, titre/diplôme d'un médecin...) —
+        différent de _is_exam_equipment (qui exclut le matériel d'examen,
+        pas n'importe quel contenu hors-sujet)."""
+        normalized = value.lower()
+        normalized = (normalized
+                      .replace('é', 'e').replace('è', 'e').replace('ê', 'e')
+                      .replace('à', 'a').replace('ù', 'u'))
+        return any(term in normalized for term in NON_DEVICE_TERMS)
+
+    def _is_lab_methodology_notice(self, value: str) -> bool:
+        """Détecte une notice méthodologique de laboratoire (changement de
+        technique de dosage...) plutôt qu'une vraie alerte clinique sur la
+        patiente, malgré la présence du mot "ATTENTION"."""
+        normalized = value.lower()
+        normalized = (normalized
+                      .replace('é', 'e').replace('è', 'e').replace('ê', 'e')
+                      .replace('à', 'a').replace('ù', 'u'))
+        return any(term in normalized for term in LAB_METHODOLOGY_TERMS)
 
     # ------------------------------------------------------------------
     # Helper générique : texte affichable d'une entrée, quelle que soit
@@ -1004,11 +1101,21 @@ class NERExtractor:
         1. historique_actes (acte réalisé) > antecedents_medicaux générique
         2. pathologie active / antécédent (médical ou acte) > facteur de risque
         3. constantes (signes vitaux structurés) > examens_bilans générique
+        4. allergies_intolerances > antecedents_medicaux générique (v3.9 :
+           constaté en pratique, "Notion d'allergie aux graminées" dupliqué
+           dans les deux catégories — l'allergie, plus spécifique et plus
+           sensible pour la sécurité, doit primer)
         """
         result["antecedents_medicaux"] = self._remove_matches(
             result.get("antecedents_medicaux", []),
             [result.get("historique_actes", [])],
             reason="Priorité historique_actes > antécédent médical",
+        )
+
+        result["antecedents_medicaux"] = self._remove_matches(
+            result.get("antecedents_medicaux", []),
+            [result.get("allergies_intolerances", [])],
+            reason="Priorité allergie > antécédent médical",
         )
 
         result["facteurs_risque"] = self._remove_matches(

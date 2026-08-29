@@ -146,6 +146,7 @@ class VSMGenerator:
 
         vsm = {
             "identite": ner_result.get("identite_patient", {}),
+            "nb_a_reevaluer": self._count_a_reevaluer(ner_result),
             "sections": [],
             "annexes": [],
         }
@@ -190,14 +191,38 @@ class VSMGenerator:
         if reference_year is None:
             return ner_result  # pas assez de dates fiables pour un calcul significatif
 
-        pathologies = ner_result.get("pathologies_actives", [])
-        for entry in pathologies:
-            if not isinstance(entry, dict):
-                continue
-            entry_year = self._extract_year(entry.get("date_debut"))
-            entry["annees_depuis_mention"] = (reference_year - entry_year) if entry_year is not None else None
+        # v3.9 : extension à traitements_en_cours, en plus de
+        # pathologies_actives. Constat run réel (DATTE Héloïse) : des
+        # dosages d'immunosuppresseurs de 2013-2017 listés comme "en
+        # cours" à côté de traitements de 2020 — même besoin d'un repère
+        # de fraîcheur que pour les pathologies, même logique (annotation
+        # informative uniquement, aucun déplacement automatique).
+        for key in ("pathologies_actives", "traitements_en_cours"):
+            for entry in ner_result.get(key, []):
+                if not isinstance(entry, dict):
+                    continue
+                entry_year = self._extract_year(entry.get("date_debut"))
+                entry["annees_depuis_mention"] = (reference_year - entry_year) if entry_year is not None else None
 
         return ner_result
+
+    def _count_a_reevaluer(self, ner_result: dict) -> int:
+        """
+        Compte le nombre d'entrées (pathologies actives + traitements en
+        cours) portant une annotation de récence > 0 an — sert de
+        résumé rapide en haut de l'écran d'audit, pour donner au médecin
+        une idée de l'ampleur de la vérification avant même de parcourir
+        le détail ligne par ligne. N'affecte ni la classification ni le
+        contenu du VSM lui-même, juste un chiffre d'orientation.
+        """
+        count = 0
+        for key in ("pathologies_actives", "traitements_en_cours"):
+            for entry in ner_result.get(key, []):
+                if isinstance(entry, dict):
+                    annees = entry.get("annees_depuis_mention")
+                    if annees is not None and annees > 0:
+                        count += 1
+        return count
 
     def _compute_reference_year(self, ner_result: dict) -> int | None:
         """
@@ -366,6 +391,16 @@ class VSMGenerator:
         lines.append(f"- **Médecin traitant déclaré** : {identite.get('medecin_traitant') or '*Non détecté*'}")
         lines.append("")
 
+        if show_sources:
+            nb = vsm.get("nb_a_reevaluer", 0)
+            if nb > 0:
+                pluriel = "s" if nb > 1 else ""
+                lines.append(
+                    f"> ⚠️ **{nb} élément{pluriel} à réévaluer** (mention ancienne) "
+                    f"avant validation — voir les annotations ci-dessous."
+                )
+                lines.append("")
+
         for section in vsm["sections"]:
             lines.append(f"## {section['titre']}")
 
@@ -414,7 +449,12 @@ class VSMGenerator:
             texte = entry["texte"]
             type_traitement = "long cours" if entry.get("type") == "long_cours" else "aigu"
             date_str = f", débuté {entry['date_debut']}" if entry.get("date_debut") else ""
-            return f"{texte} — *{type_traitement}*{date_str}{source_suffix}"
+            recency_str = ""
+            if show_sources:
+                annees = entry.get("annees_depuis_mention")
+                if annees is not None and annees > 0:
+                    recency_str = f" [dernière mention il y a {annees} an{'s' if annees > 1 else ''} — à réévaluer]"
+            return f"{texte} — *{type_traitement}*{date_str}{recency_str}{source_suffix}"
 
         if type_ == "effet_indesirable":
             texte = entry["texte"]
